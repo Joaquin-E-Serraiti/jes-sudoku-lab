@@ -1,5 +1,5 @@
 import {Grid} from "./sudokuGrid.js"
-import { Visualize } from "./visualizeAPI.js";
+import { Visualize } from "./visualize.js";
 
 
 const canvas = document.getElementById("gridCanvas");
@@ -198,4 +198,5 @@ async function analyzeButtonPressed() {
 
 }
 analyzeButton.onclick = analyzeButtonPressed;
+
 
