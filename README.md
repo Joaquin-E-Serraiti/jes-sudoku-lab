@@ -1,0 +1,1 @@
+# sudoku-patterns-analyzer
