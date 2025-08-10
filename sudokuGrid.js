@@ -249,6 +249,17 @@ export class Grid {
     return [repeatedIBPositions, repeatedHorizontalIBPos, repeatedVerticalIBPos]
   }
 
+  calculateTDCPercentage(uniqueTripletSets,repeatedTripletSets) {
+    let repeatedTripletSetsPercentage = 100*(repeatedTripletSets/54);
+    let uniqueTripletSetsPercentage;
+    if (uniqueTripletSets <= 6) {
+      uniqueTripletSetsPercentage = 100*(uniqueTripletSets/6);
+    } else {
+      uniqueTripletSetsPercentage = 100*((54-uniqueTripletSets)/48);
+    }
+    return (uniqueTripletSetsPercentage/2)+(repeatedTripletSetsPercentage/2);
+  }
+
   async analysisReport(visualization = false) {
     if (!this.isGridComplete || !this.isGridValid) {return}
 
@@ -257,6 +268,9 @@ export class Grid {
     const TDCHorizontalResults = await this.analyzeTriplets(this.horizontalTriplets,"horizontal",visualization);
     if (visualization){await this.visualizer.delay(300)}
     const TDCVerticalResults = await this.analyzeTriplets(this.verticalTriplets,"vertical",visualization)
+
+    const uniqueTripletSetsAmount = TDCHorizontalResults[1]+TDCVerticalResults[1];
+    const repeatedTripletSetsAmount = TDCHorizontalResults[0]+TDCVerticalResults[0];
 
     const report = {
       IBPU:{
@@ -269,7 +283,7 @@ export class Grid {
         metric2:["Repeated digits in vertical intra-box positions along stacks",IBPResults[2]],
       },
       TDC:{
-        percentage: 100 - (100*((TDCHorizontalResults[1]+TDCVerticalResults[1]-6)/48)),
+        percentage: this.calculateTDCPercentage(uniqueTripletSetsAmount,repeatedTripletSetsAmount),
         metric1:["Unique triplet sets",TDCHorizontalResults[1]+TDCVerticalResults[1]],
         metric2:["Repeated triplet sets",TDCHorizontalResults[0]+TDCVerticalResults[0]],
       },
