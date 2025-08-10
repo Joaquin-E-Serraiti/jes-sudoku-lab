@@ -1,0 +1,93 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sudoku Analyzer</title>
+    <link rel="stylesheet" href="sudokuAnalyzer.css" />
+  </head>
+  <body>
+    <div id="wrapper1">
+      <div id="grid"><canvas id="gridCanvas"></canvas></div>
+      <div id="wrapper2">
+        <button id="inputButton">Input grid</button>
+        <input
+          type="text"
+          name=""
+          id="gridDigitsInput"
+          placeholder="Example:123456789456789123789123456..."
+        />
+        <p id="inputAlert">
+          String must have 81 characters. Current number of characters:
+        </p>
+      </div>
+      <script type="module" src="gridDiv.js"></script>
+    </div>
+    <div id="patternsMetrics">
+      <p id="patternsMetricsHeading">GRID INFO & PATTERN METRICS</p>
+      <div id="wrapper4">
+        <p id="gridInfoHeading">Grid info</p>
+        <p class="gridInfo" id="validity">Validity: -</p>
+        <p class="gridInfo" id="completeness">Completeness: -</p>
+      </div>
+      <div class="patternInfo">
+        <p class="percentage" id="IBPUPercentage">-%</p>
+        <p class="patternName">Intra-Box Positional Uniqueness (IBPU)</p>
+        <div class="proximityBar">
+          <div class="barProgress" id="IBPUBarProgress"></div>
+        </div>
+        <div class="proximityMetricsWrapper" id="IBPUMetricsWrapper">
+          <p class="proximityMetric">
+            Repeated digits in intra-box positions: <b id="IBPUMetric1">-</b>
+          </p>
+        </div>
+      </div>
+      <div class="patternInfo">
+        <p class="patternName">Intra-Box Positional Alignment (IBPA)</p>
+        <p class="percentage" id="IBPAPercentage">-%</p>
+        <div class="proximityBar">
+          <div class="barProgress" id="IBPABarProgress"></div>
+        </div>
+        <div class="proximityMetricsWrapper" id="IBPAMetricsWrapper">
+          <p class="proximityMetric">
+            Repeated digits in horizontal intra-box positions along bands:
+            <b id="IBPAMetric1">-</b>
+          </p>
+          <p class="proximityMetric">
+            Repeated digits in vertical intra-box positions along stacks:
+            <b id="IBPAMetric2">-</b>
+          </p>
+        </div>
+      </div>
+      <div class="patternInfo">
+        <p class="percentage" id="TDCPercentage">-%</p>
+        <p class="patternName">Triplet Digit Consistency (TDC)</p>
+        <div class="proximityBar">
+          <div class="barProgress" id="TDCBarProgress"></div>
+        </div>
+        <div class="proximityMetricsWrapper" id="TDCMetricsWrapper">
+          <p class="proximityMetric">
+            Unique triplet sets: <b id="TDCMetric1">-</b>
+          </p>
+          <p class="proximityMetric">
+            Repeated triplet sets: <b id="TDCMetric2">-</b>
+          </p>
+        </div>
+      </div>
+
+      <div id="wrapper3">
+        <input
+          type="checkbox"
+          name="visualizationToggle"
+          id="visualizationToggle"
+        />
+        <label for="visualizationToggle">Visualize analysis</label>
+        <button id="analyzeButton">Analyze Patterns</button>
+        <p id="info">
+          This analysis and the patterns are based on
+          <a href="">this article</a>.
+        </p>
+      </div>
+      <p id="analysisAlert">Invalid or incomplete grids can't be analyzed</p>
+    </div>
+  </body>
+</html>
