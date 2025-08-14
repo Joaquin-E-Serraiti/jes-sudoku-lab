@@ -1,6 +1,7 @@
 # sudoku-patterns-analyzer
 
-![ScreenshotSudokuTool](https://github.com/user-attachments/assets/93767ef9-517c-4c43-9c65-d62e2b2462e9)
+![ScreenshotSudokuTool](https://github.com/user-attachments/assets/60e7eced-bb6d-4f93-9721-77e33f8a5876)
+
 
 Try it in your browser: [Sudoku Patterns Analyzer](https://joaquin-e-serraiti.github.io/sudoku-patterns-analyzer/)
 
@@ -9,6 +10,12 @@ Try it in your browser: [Sudoku Patterns Analyzer](https://joaquin-e-serraiti.gi
 1. Input a Sudoku configuration as a string of 81 characters. The valid characters are 1,2,3,4,5,6,7,8,9 and 0 or . for empty cells.
 2. Press the “Analyze Patterns” button to see pattern metrics displayed. Only complete and valid configurations can be analyzed.
 3. To visualize the analysis process, check the "Visualize analysis" box before pressing the "Analize Patterns" button.
+
+### Sudoku strings to try
+
+- 123456789456789123789123456234567891567891234891234567345678912678912345912345678
+- 478921653132657498965843712349278165256319847781564239817495326524736981693182574
+- 123456789456789123789123456312645978645978312978312645231564897564897231897231564
 
 The analysis and the patterns are based on this article: [Classification of Sudoku Patterns and Transformations](/Classification%20of%20Sudoku%20Patterns%20and%20Transformations.pdf). I recommend reading it to understand the patterns analyzed and the analysis process.
 
