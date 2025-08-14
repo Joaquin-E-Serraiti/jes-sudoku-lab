@@ -25,27 +25,46 @@ The analysis and the patterns are based on this article: [Classification of Sudo
 
 1. Download the `sudokuGrid.js` file.
 2. Import the `Grid` class.
-3. Call the `analysisReport()` method.
-4. It will return an object with the following data:
+3. Initialize an instance of the Grid class and pass a list of 81 digits (like a sudoku string, but as a list) as an argument:
+   ```js
+   const configuration = [
+   1,2,3,4,5,6,7,8,9,
+   4,5,6,7,8,9,1,2,3,
+   7,8,9,1,2,3,4,5,6,
+   2,3,4,5,6,7,8,9,1,
+   5,6,7,8,9,1,2,3,4,
+   8,9,1,2,3,4,5,6,7,
+   3,4,5,6,7,8,9,1,2,
+   6,7,8,9,1,2,3,4,5,
+   9,1,2,3,4,5,6,7,8
+   ];
+   let grid = new Grid(configuration);
+   ```
+4. Call the `analysisReport()` method:
+   
+   ```js
+   let analysisReport = grid.analysisReport();
+   ```
+6. It will return an object with the following data:
 
-```js
-{
-  IBPU:{
-    percentage: 100-((100*IBPResults[0])/81),
-    metric1:["Repeated digits in intra-box positions",IBPResults[0]]
-  },
-  IBPA:{
-    percentage:100*((IBPResults[1]+IBPResults[2])/162),
-    metric1:["Repeated digits in horizontal intra-box positions along bands",IBPResults[1]],
-    metric2:["Repeated digits in vertical intra-box positions along stacks",IBPResults[2]],
-  },
-  TDC:{
-    percentage: this.calculateTDCPercentage(uniqueTripletSetsAmount,repeatedTripletSetsAmount),
-    metric1:["Unique triplet sets",TDCHorizontalResults[1]+TDCVerticalResults[1]],
-    metric2:["Repeated triplet sets",TDCHorizontalResults[0]+TDCVerticalResults[0]],
-  },
-}
-```
+   ```js
+    {
+      IBPU:{
+        percentage: 100-((100*IBPResults[0])/81),
+        metric1:["Repeated digits in intra-box positions",IBPResults[0]]
+      },
+      IBPA:{
+        percentage:100*((IBPResults[1]+IBPResults[2])/162),
+        metric1:["Repeated digits in horizontal intra-box positions along bands",IBPResults[1]],
+        metric2:["Repeated digits in vertical intra-box positions along stacks",IBPResults[2]],
+      },
+      TDC:{
+        percentage: this.calculateTDCPercentage(uniqueTripletSetsAmount,repeatedTripletSetsAmount),
+        metric1:["Unique triplet sets",TDCHorizontalResults[1]+TDCVerticalResults[1]],
+        metric2:["Repeated triplet sets",TDCHorizontalResults[0]+TDCVerticalResults[0]],
+      },
+    }
+   ```
 
 ## How the patterns are analyzed
 
