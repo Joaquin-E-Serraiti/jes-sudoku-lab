@@ -81,7 +81,7 @@ function processSudokuString(sudokuString) {
     }
 
     isSudokuStringProcessed = true
-    gridData = new sudokuLab(sudokuString, visualizationTool);
+    gridData = new SudokuLab(sudokuString, visualizationTool);
 
     if (gridData.isGridValid) {
         gridValidityParagraph.innerText = "Valid - No repeated digits in columns, rows or boxes."
@@ -194,6 +194,7 @@ async function analyzeButtonPressed() {
 
 }
 analyzeButton.onclick = analyzeButtonPressed;
+
 
 
 
