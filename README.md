@@ -9,7 +9,7 @@ It can be used through an API, or through a graphical user interface to visualiz
 ![ScreenshotSudokuTool](https://github.com/user-attachments/assets/60e7eced-bb6d-4f93-9721-77e33f8a5876)
 
 
-Try the graphical user interface in your browser: [Sudoku Patterns Analyzer](https://joaquin-e-serraiti.github.io/sudoku-patterns-analyzer/)
+Try the graphical user interface in your browser: [Sudoku Lab GUI](https://joaquin-e-serraiti.github.io/sudoku-patterns-analyzer/)
 
 ## How to use the graphical user interface
 
