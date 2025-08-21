@@ -1,4 +1,4 @@
-import { SudokuLab } from "./sudokuGrid.js"
+import { SudokuLab } from "./sudokuLab.js"
 import { Visualize } from "./visualize.js";
 
 
@@ -194,6 +194,7 @@ async function analyzeButtonPressed() {
 
 }
 analyzeButton.onclick = analyzeButtonPressed;
+
 
 
 
