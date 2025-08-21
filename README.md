@@ -25,7 +25,7 @@ The analysis and the patterns are based on this article: [Classification of Sudo
 > [!NOTE]
 > The following steps are for using the Python version of the API, but the JavaScript version works the same.
 
-1. Download the `sudokuGrid.py` file.
+1. Download the `sudokuLab.py` file.
 2. Import the `SudokuLab` class.
 3. Initialize an instance of the `SudokuLab` class:
    ```js
