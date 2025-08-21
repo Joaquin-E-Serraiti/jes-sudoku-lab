@@ -94,8 +94,7 @@ class SudokuLab:
 
             if self.isDigitRepeated(cellIndex, digit):
                 self.isGridValid = False
-            self.addOrRemoveDigit(cellIndex, digit, remove=False)
-            self.cells[cellIndex] = digit
+            self.addOrRemoveDigit(cellIndex, digit)
 
         return True
 
@@ -200,7 +199,7 @@ class SudokuLab:
 
     def analyzeTriplets(self, tripletGroup):
         if not self.isGridComplete or not self.isGridValid:
-            return "f"
+            return
 
         tripletDigitSetCount = {}
         repeatedTripletSets = 0
@@ -299,25 +298,35 @@ class SudokuLab:
 
         # Horizontal + Vertical
         uniqueTripletSets = TDCHorizontalResults[1] + TDCVerticalResults[1]
-        # Horizontal + Vertical
         repeatedTripletSets = TDCHorizontalResults[0] + TDCVerticalResults[0]
 
         report = {
             "IBPU": {
                 "percentage": int((100-((100*IBPResults[0])/81))*100)/100,
-                "Repeated digits in intra-box positions": IBPResults[0]
+                # Repeated digits in intra-box positions
+                "metrics": [IBPResults[0]]
             },
             "IBPA": {
                 "percentage": int((100*((IBPResults[1]+IBPResults[2])/162))*100)/100,
-                "Repeated digits in horizontal intra-box positions along bands": IBPResults[1],
-                "Repeated digits in vertical intra-box positions along stacks": IBPResults[2]
+                "metrics": [
+                    # Repeated digits in horizontal intra-box positions along bands
+                    IBPResults[1],
+                    # Repeated digits in vertical intra-box positions along stacks
+                    IBPResults[2]
+                ]
             },
             "TDC": {
                 "percentage": int(self.calculateTDCPercentage(uniqueTripletSets, repeatedTripletSets)*100)/100,
-                "Unique horizontal triplet sets": TDCHorizontalResults[1],
-                "Unique vertical triplet sets": TDCVerticalResults[1],
-                "Repeated horizontal triplet sets": TDCHorizontalResults[0],
-                "Repeated vertical triplet sets": TDCVerticalResults[0]
+                "metrics": [
+                    # Unique horizontal triplet sets
+                    TDCHorizontalResults[1],
+                    # Unique vertical triplet sets
+                    TDCVerticalResults[1],
+                    # Repeated horizontal triplet sets
+                    TDCHorizontalResults[0],
+                    # Repeated vertical triplet sets
+                    TDCVerticalResults[0]
+                ]
             },
         }
         return report
