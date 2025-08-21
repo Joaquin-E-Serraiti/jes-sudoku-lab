@@ -1,4 +1,4 @@
-export class sudokuLab {
+export class SudokuLab {
 
     constructor(sudokuString = "000000000000000000000000000000000000000000000000000000000000000000000000000000000", visualizationTool = undefined) {
 
@@ -412,5 +412,6 @@ export class sudokuLab {
         return report;
     }
 }
+
 
 
