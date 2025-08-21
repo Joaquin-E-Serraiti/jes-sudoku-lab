@@ -1,11 +1,17 @@
-# sudoku-patterns-analyzer
+# Sudoku Lab
+
+Sudoku Lab is a tool to experiment with sudoku configurations.
+
+It has features for analysis of patterns, generation of configurations, visualization and more.
+
+It can be used through an API, or through a graphical user interface to visualize some of its features.
 
 ![ScreenshotSudokuTool](https://github.com/user-attachments/assets/60e7eced-bb6d-4f93-9721-77e33f8a5876)
 
 
-Try it in your browser: [Sudoku Patterns Analyzer](https://joaquin-e-serraiti.github.io/sudoku-patterns-analyzer/)
+Try the graphical user interface in your browser: [Sudoku Patterns Analyzer](https://joaquin-e-serraiti.github.io/sudoku-patterns-analyzer/)
 
-## How to use the graphical interface
+## How to use the graphical user interface
 
 1. Input a Sudoku configuration as a string of 81 characters. The valid characters are 1,2,3,4,5,6,7,8,9 and 0 or . for empty cells.
 2. Press the “Analyze Patterns” button to see pattern metrics displayed. Only complete and valid configurations can be analyzed.
@@ -21,7 +27,7 @@ The analysis and the patterns are based on this article: [Classification of Sudo
 
 **Note:** the terminology I use isn't very rigorous and may differ from Sudoku conventions.
 
-## How to use the API to analyze configurations through code
+## How to use the API to analyze configurations
 > [!NOTE]
 > The following steps are for using the Python version of the API, but the JavaScript version works the same.
 
