@@ -34,22 +34,22 @@ The analysis and the patterns are based on this article: [Classification of Sudo
 1. Download the `sudokuLab.py` file.
 2. Import the `SudokuLab` class.
 3. Initialize an instance of the `SudokuLab` class:
-   ```js
+   ```py
    sudokuLab = SudokuLab()
    ```
 4. Set a grid (the default grid is empty):
-   ```js
+   ```py
    sudokuString = "478921653132657498965843712349278165256319847781564239817495326524736981693182574"
    sudokuLab.setNewGrid(sudokuString)
    ```
 5. Call the `analysisReport()` method:
    
-   ```js
+   ```py
    analysisReport = sudokuLab.analysisReport();
    ```
 6. It will return a dictionary with the following data:
 
-   ```js
+   ```py
        {
             "IBPU": {
                 "percentage": int((100-((100*IBPResults[0])/81))*100)/100,
