@@ -22,48 +22,57 @@ The analysis and the patterns are based on this article: [Classification of Sudo
 **Note:** the terminology I use isn't very rigorous and may differ from Sudoku conventions.
 
 ## How to use the API to analyze configurations through code
+> [!NOTE]
+> The following steps are for using the Python version of the API, but the JavaScript version works the same.
 
-1. Download the `sudokuGrid.js` file.
-2. Import the `Grid` class.
-3. Initialize an instance of the Grid class and pass a list of 81 digits (like a sudoku string, but as a list) as an argument:
+1. Download the `sudokuGrid.py` file.
+2. Import the `SudokuLab` class.
+3. Initialize an instance of the `SudokuLab` class:
    ```js
-   const configuration = [
-   1,2,3,4,5,6,7,8,9,
-   4,5,6,7,8,9,1,2,3,
-   7,8,9,1,2,3,4,5,6,
-   2,3,4,5,6,7,8,9,1,
-   5,6,7,8,9,1,2,3,4,
-   8,9,1,2,3,4,5,6,7,
-   3,4,5,6,7,8,9,1,2,
-   6,7,8,9,1,2,3,4,5,
-   9,1,2,3,4,5,6,7,8
-   ];
-   let grid = new Grid(configuration);
+   sudokuLab = SudokuLab()
    ```
-4. Call the `analysisReport()` method:
+4. Set a grid (the default grid is empty):
+   ```js
+   sudokuString = "478921653132657498965843712349278165256319847781564239817495326524736981693182574"
+   sudokuLab.setNewGrid(sudokuString)
+   ```
+5. Call the `analysisReport()` method:
    
    ```js
-   let analysisReport = grid.analysisReport();
+   analysisReport = sudokuLab.analysisReport();
    ```
-6. It will return an object with the following data:
+6. It will return a dictionary with the following data:
 
    ```js
-    {
-      IBPU:{
-        percentage: 100-((100*IBPResults[0])/81),
-        metric1:["Repeated digits in intra-box positions",IBPResults[0]]
-      },
-      IBPA:{
-        percentage:100*((IBPResults[1]+IBPResults[2])/162),
-        metric1:["Repeated digits in horizontal intra-box positions along bands",IBPResults[1]],
-        metric2:["Repeated digits in vertical intra-box positions along stacks",IBPResults[2]],
-      },
-      TDC:{
-        percentage: this.calculateTDCPercentage(uniqueTripletSetsAmount,repeatedTripletSetsAmount),
-        metric1:["Unique triplet sets",TDCHorizontalResults[1]+TDCVerticalResults[1]],
-        metric2:["Repeated triplet sets",TDCHorizontalResults[0]+TDCVerticalResults[0]],
-      },
-    }
+       {
+            "IBPU": {
+                "percentage": int((100-((100*IBPResults[0])/81))*100)/100,
+                # Repeated digits in intra-box positions
+                "metrics": [IBPResults[0]]
+            },
+            "IBPA": {
+                "percentage": int((100*((IBPResults[1]+IBPResults[2])/162))*100)/100,
+                "metrics": [
+                    # Repeated digits in horizontal intra-box positions along bands
+                    IBPResults[1],
+                    # Repeated digits in vertical intra-box positions along stacks
+                    IBPResults[2]
+                ]
+            },
+            "TDC": {
+                "percentage": int(self.calculateTDCPercentage(uniqueTripletSets, repeatedTripletSets)*100)/100,
+                "metrics": [
+                    # Unique horizontal triplet sets
+                    TDCHorizontalResults[1],
+                    # Unique vertical triplet sets
+                    TDCVerticalResults[1],
+                    # Repeated horizontal triplet sets
+                    TDCHorizontalResults[0],
+                    # Repeated vertical triplet sets
+                    TDCVerticalResults[0]
+                ]
+            },
+        }
    ```
 
 ## How the patterns are analyzed
