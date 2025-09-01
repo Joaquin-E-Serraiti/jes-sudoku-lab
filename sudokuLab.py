@@ -27,6 +27,7 @@ class SudokuLab:
         # Ordered right to left, top to bottom
         self.horizontalTriplets = [[] for i in range(27)]
         self.verticalTriplets = [[] for i in range(27)]
+        self.boxes = [[] for i in range(9)]
 
         self.fillLookUpTables()
 
@@ -49,6 +50,7 @@ class SudokuLab:
 
             self.horizontalTriplets[self.cellHTriplet[i]].append(i)
             self.verticalTriplets[self.cellVTriplet[i]].append(i)
+            self.boxes[self.cellBox[i]].append(i)
 
     def setNewGrid(self, newSudokuString):
         result = self.processSudokuString(newSudokuString)
@@ -283,6 +285,60 @@ class SudokuLab:
 
         return [repeatedIBPositions, repeatedHorizontalIBPositions, repeatedVerticalIBPositions]
 
+    def analyzeDAC(self):
+        if not self.isGridComplete or not self.isGridValid:
+            return
+
+        # 4 bitmasks (up, right, down, left) per digit. Each bitmask stores digits 1 to 9.
+        adjacentDigits = {1: [0, 0, 0, 0], 2: [0, 0, 0, 0], 3: [0, 0, 0, 0],
+                          4: [0, 0, 0, 0], 5: [0, 0, 0, 0], 6: [0, 0, 0, 0],
+                          7: [0, 0, 0, 0], 8: [0, 0, 0, 0], 9: [0, 0, 0, 0]}
+        repeatedAdjacentDigits = 0
+        uniqueAdjacentDigits = 0
+
+        for box in self.boxes:
+            for i in range(9):
+                cellIndex = box[i]
+                digit = self.cells[cellIndex]
+                # 0 = up, 1 = right, 2 = down, 3 = left
+                for direction in range(4):
+                    adjacentIndex = None
+                    match direction:
+                        case 0: adjacentIndex = i-3
+                        case 1: adjacentIndex = i+1
+                        case 2: adjacentIndex = i+3
+                        case 3: adjacentIndex = i-1
+
+                    if adjacentIndex > 8 or adjacentIndex < 0:
+                        continue
+
+                    adjacentCellIndex = box[adjacentIndex]
+                    cellCol = self.cellCol[cellIndex]
+                    adjacentCellCol = self.cellCol[adjacentCellIndex]
+                    cellRow = self.cellRow[cellIndex]
+                    adjacentCellRow = self.cellRow[adjacentCellIndex]
+
+                    if (cellCol != adjacentCellCol) and (cellRow != adjacentCellRow):
+                        continue
+
+                    adjacentDigit = self.cells[adjacentCellIndex]
+                    if adjacentDigits[digit][direction] & (
+                            1 << (adjacentDigit-1)):
+                        repeatedAdjacentDigits += 1
+                    adjacentDigits[digit][direction] |= (
+                        1 << (adjacentDigit-1))
+
+        for digit in range(1, 10):
+            for direction in range(4):  # 0 = up, 1 = right, 2 = down, 3 = left
+                uniqueAdjacentDigits += adjacentDigits[digit][direction].bit_count()
+
+        # Maximum of 180 repeated adjacent digits. Don't know the minimum (it's equal to or higher than 0).
+        # Minimum of 36 unique adjacent digits. Don't know the maximum, but it is equal to or lower than 324 (324 = 9 digits x 4 directions x 9 digits, as if each digit had 9 unique adjacent digits in each one of the 4 directions).
+        return [repeatedAdjacentDigits, uniqueAdjacentDigits]
+
+    def calculateDACPercentage(self, repeatedAdjacentDigits):
+        return (100/180)*repeatedAdjacentDigits
+
     def calculateTDCPercentage(self, uniqueTripletSets, repeatedTripletSets):
         repeatedTripletSetsPercentage = 100*(repeatedTripletSets/54)
         uniqueTripletSetsPercentage = 100*((54-uniqueTripletSets)/48)
@@ -295,6 +351,7 @@ class SudokuLab:
         IBPResults = self.analyzeIntraBoxPositions()
         TDCHorizontalResults = self.analyzeTriplets(self.horizontalTriplets)
         TDCVerticalResults = self.analyzeTriplets(self.verticalTriplets)
+        DACResults = self.analyzeDAC()
 
         # Horizontal + Vertical
         uniqueTripletSets = TDCHorizontalResults[1] + TDCVerticalResults[1]
@@ -303,8 +360,11 @@ class SudokuLab:
         report = {
             "IBPU": {
                 "percentage": int((100-((100*IBPResults[0])/81))*100)/100,
-                # Repeated digits in intra-box positions
-                "metrics": [IBPResults[0]]
+
+                "metrics": [
+                    # Repeated digits in intra-box positions
+                    IBPResults[0]
+                ]
             },
             "IBPA": {
                 "percentage": int((100*((IBPResults[1]+IBPResults[2])/162))*100)/100,
@@ -328,6 +388,14 @@ class SudokuLab:
                     TDCVerticalResults[0]
                 ]
             },
+            "DAC": {
+                "percentage": int(self.calculateDACPercentage(DACResults[0])*100)/100,
+                "metrics": [
+                    # Repeated adjacent digits
+                    DACResults[0],
+                    # Unique adjacent digits
+                    DACResults[1]
+                ]
+            }
         }
         return report
-
