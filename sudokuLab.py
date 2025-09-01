@@ -157,6 +157,9 @@ class SudokuLab:
                 f"| {sudokuString[0+(9*i):3+(9*i)]} | {sudokuString[3+(9*i):6+(9*i)]} | {sudokuString[6+(9*i):9+(9*i)]} |")
         print("-------------------")
 
+    def getSudokuString(self):
+        return self.listToString(self.cells)
+    
     def generateRandomGrids(self, numberOfGridsToGenerate):
         colBits = self.colBits.copy()
         rowBits = self.rowBits.copy()
@@ -330,4 +333,5 @@ class SudokuLab:
             },
         }
         return report
+
 
