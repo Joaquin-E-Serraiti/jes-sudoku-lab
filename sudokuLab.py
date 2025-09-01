@@ -147,8 +147,9 @@ class SudokuLab:
     def listToString(list):
         return "".join(str(element) for element in list)
 
-    @staticmethod
-    def printGrid(sudokuString):
+    def printGrid(self, sudokuString=None):
+        if sudokuString == None:
+            sudokuString = self.getSudokuString()
         print("-------------------")
         for i in range(9):
             if i % 3 == 0 and i != 0:
@@ -333,5 +334,6 @@ class SudokuLab:
             },
         }
         return report
+
 
 
