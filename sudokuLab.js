@@ -23,6 +23,7 @@ export class SudokuLab {
         // Ordered right to left, top to bottom
         this.horizontalTriplets = Array.from({length:27}, () => []);
         this.verticalTriplets = Array.from({length:27}, () => []);
+        this.boxes = Array.from({length:9}, () => []);
 
         this.fillLookUpTables();
         
@@ -78,6 +79,7 @@ export class SudokuLab {
 
             this.horizontalTriplets[this.cellHTriplet[i]].push(i);
             this.verticalTriplets[this.cellVTriplet[i]].push(i);
+            this.boxes[this.cellBox[i]].push(i);
         }
     }
 
@@ -184,6 +186,15 @@ export class SudokuLab {
         return !(bits & (bits-1));
     }
 
+    countSetBits(bitmask) {
+        let count = 0;
+        while (bitmask) {
+            count++;
+            bitmask &= (bitmask-1);
+        }
+        return count
+    }
+
     listToString(list) {
         return list.join("");
     }
@@ -265,10 +276,10 @@ export class SudokuLab {
             counter++
 
             if (tripletDigitSetCount[key] === 2) {
-                if (visualization && this.visualizer){await this.visualizer.delay(180)};
+                if (visualization && this.visualizer){await this.visualizer.delay(50)};
                 repeatedTripletSets += 2;
             } else if (tripletDigitSetCount[key] > 2) {
-                if (visualization && this.visualizer){await this.visualizer.delay(180)};
+                if (visualization && this.visualizer){await this.visualizer.delay(50)};
                 repeatedTripletSets += 1;
             }
         }
@@ -362,6 +373,97 @@ export class SudokuLab {
         return [repeatedIBPositions, repeatedHorizontalIBPos, repeatedVerticalIBPos]
     }
 
+    async analyzeDAC(visualization=false) {
+        if (!this.isGridComplete || !this.isGridValid) {return}
+
+        // 4 bitmasks (up, right, down, left) per digit. Each bitmask stores digits 1 to 9.
+        const adjacentDigits = {1: [0, 0, 0, 0], 2: [0, 0, 0, 0], 3: [0, 0, 0, 0],
+                                4: [0, 0, 0, 0], 5: [0, 0, 0, 0], 6: [0, 0, 0, 0],
+                                7: [0, 0, 0, 0], 8: [0, 0, 0, 0], 9: [0, 0, 0, 0]};
+        
+        let repeatedAdjacentDigits = 0;
+        let uniqueAdjacentDigits = 0;
+
+        let boxIndex = 0;
+        for (const box of this.boxes) {
+            for (let i = 0; i < 9; i++) {
+                const cellIndex = box[i];
+                const digit = this.cells[cellIndex];
+                // 0 = up, 1 = right, 2 = down, 3 = left
+
+                if (visualization && this.visualizer) {
+                    this.visualizer.drawBox("rgba(102, 186, 255, 0.17)", boxIndex);
+                    this.visualizer.drawCell("rgba(57, 80, 253, 0.33)", cellIndex);
+                }
+
+                for (let direction = 0; direction < 4; direction++) {
+                    let adjacentIndex = undefined;
+                    switch (direction) {
+                        case 0: 
+                            adjacentIndex = i-3
+                            break
+                        case 1: 
+                            adjacentIndex = i+1
+                            break
+                        case 2: 
+                            adjacentIndex = i+3
+                            break
+                        case 3: 
+                            adjacentIndex = i-1
+                            break
+                    }
+                    if (adjacentIndex > 8 || adjacentIndex < 0){continue}
+
+                    const adjacentCellIndex = box[adjacentIndex];
+                    const cellCol = this.cellCol[cellIndex];
+                    const adjacentCellCol = this.cellCol[adjacentCellIndex];
+                    const cellRow = this.cellRow[cellIndex];
+                    const adjacentCellRow = this.cellRow[adjacentCellIndex];
+
+                    if ((cellCol != adjacentCellCol) && (cellRow != adjacentCellRow)) {continue}
+                    
+                    let isAdjacentDigitRepeated = false;
+                    const adjacentDigit = this.cells[adjacentCellIndex];
+                    if (adjacentDigits[digit][direction] & (1 << (adjacentDigit-1))) {
+                            repeatedAdjacentDigits += 1;
+                            isAdjacentDigitRepeated = true
+                    }
+                    
+                    if (visualization && this.visualizer) {
+                        if (isAdjacentDigitRepeated) {
+                            this.visualizer.drawCell("rgba(57, 253, 168, 0.24)", adjacentCellIndex);
+                        } else {
+                            this.visualizer.drawCell("rgba(253, 57, 83, 0.18)", adjacentCellIndex);
+                        }
+                    }
+                    
+                    adjacentDigits[digit][direction] |= (1 << (adjacentDigit-1));
+                }
+
+                if (visualization && this.visualizer) {
+                    await this.visualizer.delay(150);
+                    this.visualizer.clearCanvas();
+                }
+            }
+            boxIndex++;
+        }
+
+        for (let digit = 1; digit < 10; digit++) {
+            for (let direction = 0; direction < 4; direction++) {
+                uniqueAdjacentDigits += this.countSetBits(adjacentDigits[digit][direction])
+            }
+        }
+
+        // Maximum of 180 repeated adjacent digits. Don't know the minimum (it's equal to or higher than 0).
+        // Minimum of 36 unique adjacent digits. Don't know the maximum, but it is equal to or lower than 324 (324 = 9 digits x 4 directions x 9 digits, as if each digit had 9 unique adjacent digits in each one of the 4 directions).
+        return [repeatedAdjacentDigits, uniqueAdjacentDigits]
+
+    }
+
+    calculateDACPercentage(repeatedAdjacentDigits) {
+        return (100/180)*repeatedAdjacentDigits
+    }
+
     calculateTDCPercentage(uniqueTripletSets,repeatedTripletSets) {
         const repeatedTripletSetsPercentage = 100*(repeatedTripletSets/54)
         const uniqueTripletSetsPercentage = 100*((54-uniqueTripletSets)/48)
@@ -375,7 +477,9 @@ export class SudokuLab {
         if (visualization){await this.visualizer.delay(300)}
         const TDCHorizontalResults = await this.analyzeTriplets(this.horizontalTriplets,"horizontal",visualization);
         if (visualization){await this.visualizer.delay(300)}
-        const TDCVerticalResults = await this.analyzeTriplets(this.verticalTriplets,"vertical",visualization)
+        const TDCVerticalResults = await this.analyzeTriplets(this.verticalTriplets,"vertical",visualization);
+        if (visualization){await this.visualizer.delay(300)}
+        const DACResults = await this.analyzeDAC(visualization);
 
         // Horizontal + vertical
         const uniqueTripletSets = TDCHorizontalResults[1]+TDCVerticalResults[1];
@@ -384,7 +488,10 @@ export class SudokuLab {
         const report = {
             "IBPU":{
                 "percentage": Math.floor((100-((100*IBPResults[0])/81))*100)/100,
-                "metrics":[IBPResults[0]]// Repeated digits in intra-box positions
+                "metrics":[
+                    // Repeated digits in intra-box positions
+                    IBPResults[0]
+                ]
             },
             "IBPA":{
                 "percentage":Math.floor((100*((IBPResults[1]+IBPResults[2])/162))*100)/100,
@@ -407,12 +514,17 @@ export class SudokuLab {
                     // Repeated vertical triplet sets
                     TDCVerticalResults[0],
                 ]
+            },
+            "DAC": {
+                "percentage": Math.floor(this.calculateDACPercentage(DACResults[0])*100)/100,
+                "metrics": [
+                    // Repeated adjacent digits
+                    DACResults[0],
+                    // Unique adjacent digits
+                    DACResults[1]
+                ]
             }
         }
         return report;
     }
 }
-
-
-
-

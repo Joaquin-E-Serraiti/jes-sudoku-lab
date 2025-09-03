@@ -16,20 +16,24 @@ const gridCompletenessParagraph = document.getElementById("completeness");
 const IBPUmetricsWrapper = document.getElementById("IBPUMetricsWrapper");
 const IBPAmetricsWrapper = document.getElementById("IBPAMetricsWrapper");
 const TDCmetricsWrapper = document.getElementById("TDCMetricsWrapper");
+const DACmetricsWrapper = document.getElementById("DACMetricsWrapper");
 
 const IBPUProgressBar = document.getElementById("IBPUBarProgress");
 const IBPAProgressBar = document.getElementById("IBPABarProgress");
 const TDCProgressBar = document.getElementById("TDCBarProgress");
+const DACProgressBar = document.getElementById("DACBarProgress");
 
 const IBPUpercentage = document.getElementById("IBPUPercentage");
 const IBPApercentage = document.getElementById("IBPAPercentage");
 const TDCpercentage = document.getElementById("TDCPercentage");
+const DACpercentage = document.getElementById("DACPercentage");
 
 const IBPUmetric1 = document.getElementById("IBPUMetric1");
 const IBPAmetric1 = document.getElementById("IBPAMetric1");
 const IBPAmetric2 = document.getElementById("IBPAMetric2");
 const TDCmetric1 = document.getElementById("TDCMetric1");
 const TDCmetric2 = document.getElementById("TDCMetric2");
+const DACmetric1 = document.getElementById("DACMetric1");
 
 canvas.width = sudokuGrid.offsetWidth-2;
 canvas.height = sudokuGrid.offsetHeight-2;
@@ -65,7 +69,7 @@ function processSudokuString(sudokuString) {
     if (sudokuString.length !== 81) {
         inputField.style.borderColor = "rgba(145, 0, 0, 1)";
         inputField.style.backgroundColor = "rgb(255, 239, 239)";
-        inputAlert.innerText = "String must have 81 characters. Current number of characters: "+sudokuString.length;
+        inputAlert.innerText = "String must have 81 characters. Current number: "+sudokuString.length;
         inputAlert.style.display = "initial"
         return false;
     }
@@ -129,20 +133,26 @@ async function inputButtonPressed() {
     IBPAmetricsWrapper.style.opacity = "0%";
     TDCmetricsWrapper.style.height = "0px";
     TDCmetricsWrapper.style.opacity = "0%";
+    DACmetricsWrapper.style.height = "0px";
+    DACmetricsWrapper.style.opacity = "0%";
 
     IBPUProgressBar.style.width = `0%`;
     IBPAProgressBar.style.width = `0%`;
     TDCProgressBar.style.width = `0%`;
+    DACProgressBar.style.width = `0%`;
+    resetBarsColor()
 
     IBPUpercentage.innerText = "-%";
     IBPApercentage.innerText = "-%";
     TDCpercentage.innerText = "-%";
+    DACpercentage.innerText = "-%";
 
     IBPUmetric1.innerText = "-";
     IBPAmetric1.innerText = "-";
     IBPAmetric2.innerText = "-";
     TDCmetric1.innerText = "-";
     TDCmetric2.innerText = "-";
+    DACmetric1.innerText = "-";
 }
 inputButton.onclick = inputButtonPressed;
 
@@ -150,6 +160,13 @@ function getBarColor(percentage) {
     const number = (255/100)*percentage;
     const difference = Math.abs((2*number) - 255);
     return `rgb(${255-number},${number},${60+255-difference})`
+}
+
+function resetBarsColor() {
+    IBPUProgressBar.style.backgroundColor = "rgb(243, 90, 105)"
+    IBPAProgressBar.style.backgroundColor = "rgb(243, 90, 105)"
+    TDCProgressBar.style.backgroundColor = "rgb(243, 90, 105)"
+    DACProgressBar.style.backgroundColor = "rgb(243, 90, 105)"
 }
 
 async function analyzeButtonPressed() {
@@ -175,6 +192,8 @@ async function analyzeButtonPressed() {
     IBPAmetricsWrapper.style.opacity = "100%";
     TDCmetricsWrapper.style.height = "45px";
     TDCmetricsWrapper.style.opacity = "100%";
+    DACmetricsWrapper.style.height = "23px";
+    DACmetricsWrapper.style.opacity = "100%";
 
     IBPUProgressBar.style.width = `${analysisReport["IBPU"]["percentage"]}%`;
     IBPUProgressBar.style.backgroundColor = getBarColor(analysisReport["IBPU"]["percentage"]);
@@ -185,12 +204,16 @@ async function analyzeButtonPressed() {
     TDCProgressBar.style.width = `${analysisReport["TDC"]["percentage"]}%`;
     TDCProgressBar.style.backgroundColor = getBarColor(analysisReport["TDC"]["percentage"]);
     TDCpercentage.innerText = analysisReport["TDC"]["percentage"]+"%";
+    DACProgressBar.style.width = `${analysisReport["DAC"]["percentage"]}%`;
+    DACProgressBar.style.backgroundColor = getBarColor(analysisReport["DAC"]["percentage"]);
+    DACpercentage.innerText = analysisReport["DAC"]["percentage"]+"%";
 
     IBPUmetric1.innerText = analysisReport["IBPU"]["metrics"][0];
     IBPAmetric1.innerText = analysisReport["IBPA"]["metrics"][0];
     IBPAmetric2.innerText = analysisReport["IBPA"]["metrics"][1];
     TDCmetric1.innerText = analysisReport["TDC"]["metrics"][0]+analysisReport["TDC"]["metrics"][1];
     TDCmetric2.innerText = analysisReport["TDC"]["metrics"][2]+analysisReport["TDC"]["metrics"][3];
+    DACmetric1.innerText = analysisReport["DAC"]["metrics"][0];
 
 }
 analyzeButton.onclick = analyzeButtonPressed;
