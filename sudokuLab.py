@@ -149,8 +149,9 @@ class SudokuLab:
     def listToString(list):
         return "".join(str(element) for element in list)
 
-    @staticmethod
-    def printGrid(sudokuString):
+    def printGrid(self, sudokuString=None):
+        if sudokuString == None:
+            sudokuString = self.getSudokuString()
         print("-------------------")
         for i in range(9):
             if i % 3 == 0 and i != 0:
@@ -159,6 +160,9 @@ class SudokuLab:
                 f"| {sudokuString[0+(9*i):3+(9*i)]} | {sudokuString[3+(9*i):6+(9*i)]} | {sudokuString[6+(9*i):9+(9*i)]} |")
         print("-------------------")
 
+    def getSudokuString(self):
+        return self.listToString(self.cells)
+    
     def generateRandomGrids(self, numberOfGridsToGenerate):
         colBits = self.colBits.copy()
         rowBits = self.rowBits.copy()
