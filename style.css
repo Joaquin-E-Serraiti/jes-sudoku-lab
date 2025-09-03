@@ -115,7 +115,7 @@ canvas {
   height: fit-content;
   width: 400px;
   margin-left: 43px;
-  padding: 30px 30px 150px 30px;
+  padding: 30px 30px 160px 30px;
   font-family: Arial, Helvetica, sans-serif;
 }
 #patternsMetricsHeading {
@@ -236,4 +236,3 @@ canvas {
   user-select: none;
   color: rgb(189, 22, 22);
 }
-
