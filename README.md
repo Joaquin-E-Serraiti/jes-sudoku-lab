@@ -25,6 +25,9 @@ Try the graphical user interface in your browser: [Sudoku Lab GUI](https://joaqu
 
 The analysis and the patterns are based on this article: [Classification of Sudoku Patterns and Transformations](/Classification%20of%20Sudoku%20Patterns%20and%20Transformations.pdf). I recommend reading it to understand the patterns analyzed and the analysis process.
 
+> [!IMPORTANT]
+> The article linked above currently has some incorrect information and will be updated in the future. Specifically, the statement "every configuration that satisfies the Digit Adjacency Consistency pattern (DAC) also satisfies the Triplet Digit Consistency pattern (TDC)" is incorrect.
+
 **Note:** the terminology I use isn't very rigorous and may differ from Sudoku conventions.
 
 ## How to use the API to analyze configurations
@@ -53,8 +56,11 @@ The analysis and the patterns are based on this article: [Classification of Sudo
        {
             "IBPU": {
                 "percentage": int((100-((100*IBPResults[0])/81))*100)/100,
-                # Repeated digits in intra-box positions
-                "metrics": [IBPResults[0]]
+
+                "metrics": [
+                    # Repeated digits in intra-box positions
+                    IBPResults[0]
+                ]
             },
             "IBPA": {
                 "percentage": int((100*((IBPResults[1]+IBPResults[2])/162))*100)/100,
@@ -78,6 +84,15 @@ The analysis and the patterns are based on this article: [Classification of Sudo
                     TDCVerticalResults[0]
                 ]
             },
+            "DAC": {
+                "percentage": int(self.calculateDACPercentage(DACResults[0])*100)/100,
+                "metrics": [
+                    # Repeated adjacent digits
+                    DACResults[0],
+                    # Unique adjacent digits
+                    DACResults[1]
+                ]
+            }
         }
    ```
 
