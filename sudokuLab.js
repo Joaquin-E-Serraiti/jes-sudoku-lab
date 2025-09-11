@@ -11,6 +11,10 @@ export class SudokuLab {
         this.rowBits = [0,0,0,0,0,0,0,0,0]
         this.colBits = [0,0,0,0,0,0,0,0,0]
 
+        // Triplets bitmasks. 1 bitmask per triplet (9 bits)
+        this.horizontalTripletsBits = Array(81).fill(27);
+        this.verticalTripletsBits = Array(81).fill(27);
+
         // Look up tables for indices
         this.cellRow = [];
         this.cellCol = [];
@@ -25,6 +29,14 @@ export class SudokuLab {
         this.verticalTriplets = Array.from({length:27}, () => []);
         this.boxes = Array.from({length:9}, () => []);
 
+        // Indices of horizontal and vertical triplets per box
+        this.boxesHTriplets = Array.from({length:9}, () => []);
+        this.boxesVTriplets = Array.from({length:9}, () => []);
+
+        // Indices of boxes per band and stack
+        this.bandBoxes = [[0, 1, 2], [3, 4, 5], [6, 7, 8]];
+        this.stackBoxes = [[0, 3, 6], [1, 4, 7], [2, 5, 8]];
+
         this.fillLookUpTables();
         
         // Grid info
@@ -34,6 +46,11 @@ export class SudokuLab {
         this.setNewGrid(sudokuString);
 
         this.gridsGenerated = [];
+        this.transformations = {
+            "tripletSwaps": [],
+            "digitSwaps1": [],
+            "digitSwaps2": [],
+            "digitSwaps3": []}
 
         // Colors for visualization
         this.colors = [
@@ -81,6 +98,12 @@ export class SudokuLab {
             this.verticalTriplets[this.cellVTriplet[i]].push(i);
             this.boxes[this.cellBox[i]].push(i);
         }
+        for (let i = 0; i<27; i++) {
+            const hTripletBox = (i % 3)+(Math.floor(i/9)*3);
+            const vTripletBox = Math.floor(i/3);
+            this.boxesHTriplets[hTripletBox].push(i);
+            this.boxesVTriplets[vTripletBox].push(i);
+        }
     }
 
     resetGridData() {
@@ -88,8 +111,15 @@ export class SudokuLab {
         this.boxBits = [0,0,0,0,0,0,0,0,0];
         this.rowBits = [0,0,0,0,0,0,0,0,0];
         this.colBits = [0,0,0,0,0,0,0,0,0];
+        this.horizontalTripletsBits = Array(27).fill(0);
+        this.verticalTripletsBits = Array(27).fill(0);
         this.isGridValid = true;
         this.isGridComplete = true;
+        this.transformations = {
+            "tripletSwaps": [],
+            "digitSwaps1": [],
+            "digitSwaps2": [],
+            "digitSwaps3": []}
     }
 
     setNewGrid(sudokuString) {
@@ -139,16 +169,22 @@ export class SudokuLab {
         const boxIndex = this.cellBox[cellIndex];
         const rowIndex = this.cellRow[cellIndex];
         const colIndex = this.cellCol[cellIndex];
+        const hTripletIndex = this.cellHTriplet[cellIndex];
+        const vTripletIndex = this.cellVTriplet[cellIndex];
 
         if (!remove) {
             this.boxBits[boxIndex] |= bit;
             this.rowBits[rowIndex] |= bit;
             this.colBits[colIndex] |= bit;
+            this.horizontalTripletsBits[hTripletIndex] |= bit;
+            this.verticalTripletsBits[vTripletIndex] |= bit;
             this.cells[cellIndex] = digit;
         } else {
             this.boxBits[boxIndex] &= ~bit;
             this.rowBits[rowIndex] &= ~bit;
             this.colBits[colIndex] &= ~bit;
+            this.horizontalTripletsBits[hTripletIndex] &= ~bit;
+            this.verticalTripletsBits[vTripletIndex] &= ~bit;
             this.cells[cellIndex] = 0;
         }
     }
@@ -181,6 +217,12 @@ export class SudokuLab {
         }
         return digitsList
     }
+    digitsListToBits(digitsList=[]){
+        let bits = 0
+        for (const digit of digitsList){
+            bits |= 1 << (digit-1)
+        }
+        return bits}
 
     isOnlyOneBitSet(bits) {
         return !(bits & (bits-1));
@@ -198,6 +240,9 @@ export class SudokuLab {
     listToString(list) {
         return list.join("");
     }
+    getSudokuString() {
+        return this.listToString(this.cells)
+    }
 
     shuffle(array) {
         for (let i = array.length - 1; i > 0; i--) {
@@ -211,9 +256,11 @@ export class SudokuLab {
         const colBits = [...this.colBits];
         const rowBits = [...this.rowBits];
         const boxBits = [...this.boxBits];
+        const hTripletsBits = [...this.horizontalTripletsBits];
+        const vTripletsBits = [...this.verticalTripletsBits];
         const gridCells = [...this.cells];
         const isGridValid = this.isGridValid;
-        const isGridComplete = this.isGridComplete;
+        const isGridComplete = this.isGridComplete;        
         for (let i = 0; i < numberOfGridsToGenerate; i++) {
             this.resetGridData();
             this.randomGridGenerator();
@@ -224,6 +271,8 @@ export class SudokuLab {
         this.colBits = colBits;
         this.rowBits = rowBits;
         this.boxBits = boxBits;
+        this.horizontalTripletsBits = hTripletsBits;
+        this.verticalTripletsBits = vTripletsBits;
         this.isGridComplete = isGridComplete;
         this.isGridValid = isGridValid;
         return gridsGenerated
@@ -284,7 +333,7 @@ export class SudokuLab {
             }
         }
         if (visualization && this.visualizer) {
-            await this.visualizer.delay(1700);
+            await this.visualizer.delay(3000);
             this.visualizer.clearCanvas();
         }
         return [repeatedTripletSets, Object.keys(tripletDigitSetCount).length];
@@ -323,9 +372,9 @@ export class SudokuLab {
             if (visualization && this.visualizer) {
                 for (const cellWRIBP of cellsWithRepeatedIBPos) { 
                     // cellWRIBP = cell with repeated intra-box position
-                    this.visualizer.drawTriplet("rgba(253, 57, 57, 0.1)",this.cellHTriplet[cellWRIBP],"horizontal");
-                    this.visualizer.drawTriplet("rgba(253, 57, 57, 0.1)",this.cellVTriplet[cellWRIBP],"vertical");
-                    this.visualizer.drawCell("rgba(253, 57, 57, 0.2)",cellWRIBP);
+                    //this.visualizer.drawTriplet("rgba(253, 57, 57, 0.1)",this.cellHTriplet[cellWRIBP],"horizontal");
+                    //this.visualizer.drawTriplet("rgba(253, 57, 57, 0.1)",this.cellVTriplet[cellWRIBP],"vertical");
+                    this.visualizer.drawCell("rgba(232, 44, 44, 0.32)",cellWRIBP);
                 }
                 this.visualizer.drawBandOrStack("rgba(102, 186, 255, 0.20)", this.cellBand[cellIndex], "horizontal");
                 this.visualizer.drawBandOrStack("rgba(102, 186, 255, 0.20)", this.cellStack[cellIndex], "vertical");
@@ -362,9 +411,9 @@ export class SudokuLab {
 
         if (visualization && this.visualizer) {
             for (const cellWRIBP of cellsWithRepeatedIBPos) {
-                this.visualizer.drawTriplet("rgba(253, 57, 57, 0.1)",this.cellHTriplet[cellWRIBP],"horizontal");
-                this.visualizer.drawTriplet("rgba(253, 57, 57, 0.1)",this.cellVTriplet[cellWRIBP],"vertical");
-                this.visualizer.drawCell("rgba(253, 57, 57, 0.2)",cellWRIBP);
+                //this.visualizer.drawTriplet("rgba(253, 57, 57, 0.1)",this.cellHTriplet[cellWRIBP],"horizontal");
+                //this.visualizer.drawTriplet("rgba(253, 57, 57, 0.1)",this.cellVTriplet[cellWRIBP],"vertical");
+                this.visualizer.drawCell("rgba(232, 44, 44, 0.32)",cellWRIBP);
             }
             if (cellsWithRepeatedIBPos.length > 0) {await this.visualizer.delay(1700)}
             else {await this.visualizer.delay(500)}
@@ -526,5 +575,250 @@ export class SudokuLab {
             }
         }
         return report;
+    }
+
+
+    tripletTargetCells(tripletCellsIndices, digitPairBits) {
+        const targetCells = [];
+        for (const cellIndex of tripletCellsIndices) {
+            const digit = this.cells[cellIndex];
+            if (digitPairBits & (1 << (digit-1))){
+                targetCells.push(cellIndex);
+            }
+        }
+        return targetCells
+    }
+
+    twoBitsShared(bitmask1, bitmask2) {
+        return (this.countSetBits(bitmask1 & bitmask2) == 2)
+    }
+
+    getOrientationData(orientation="horizontal") {
+        const orientationData = {};
+        if (orientation == "horizontal"){
+            orientationData["boxTriplets"] = this.boxesHTriplets;
+            orientationData["tripletsBits"] = this.horizontalTripletsBits;
+            orientationData["tripletsCellsIndices"] = this.horizontalTriplets;
+            orientationData["bandOrStackBoxes"] = this.stackBoxes;
+        } else if (orientation == "vertical") {
+            orientationData["boxTriplets"] = this.boxesVTriplets;
+            orientationData["tripletsBits"] = this.verticalTripletsBits;
+            orientationData["tripletsCellsIndices"] = this.verticalTriplets;
+            orientationData["bandOrStackBoxes"] = this.bandBoxes;
+        }
+        return orientationData
+    }
+    
+    tripletSwaps(targetBoxIndex, triplet0Index, orientationData) {
+        const triplet0Bits = orientationData["tripletsBits"][triplet0Index]
+        for (const triplet1Index of orientationData["boxTriplets"][targetBoxIndex]) {
+            const triplet1Bits = orientationData["tripletsBits"][triplet1Index]
+            if (triplet0Bits == triplet1Bits) {
+                const triplet0Cells = orientationData["tripletsCellsIndices"][triplet0Index]
+                const triplet1Cells = orientationData["tripletsCellsIndices"][triplet1Index]
+                const cellPair1 = [triplet0Cells[0], triplet1Cells[0]]
+                const cellPair2 = [triplet0Cells[1], triplet1Cells[1]]
+                const cellPair3 = [triplet0Cells[2], triplet1Cells[2]]
+                this.transformations["tripletSwaps"].push(
+                    [cellPair1, cellPair2, cellPair3])
+                return triplet1Index
+            }
+        }
+        return null
+    }
+
+    digitSwaps1( bandOrStackIndex, triplet0Index, orientationData) {
+        const triplet0Bits = orientationData["tripletsBits"][triplet0Index];
+        const bandOrStackBoxes = orientationData["bandOrStackBoxes"][bandOrStackIndex];
+        const box1Index = bandOrStackBoxes[1];
+        const box2Index = bandOrStackBoxes[2];
+        const box1Triplets = orientationData["boxTriplets"][box1Index];;
+        const box2Triplets = orientationData["boxTriplets"][box2Index]
+
+        for (const triplet1Index of box1Triplets) {
+            const triplet1Bits = orientationData["tripletsBits"][triplet1Index]
+            const sharedDigitsNumber = this.countSetBits(triplet0Bits & triplet1Bits);
+            if (!(sharedDigitsNumber>=2)) {continue}
+            if (sharedDigitsNumber == 3) {
+                for (const skippedCellIndex of [0,1,2]) {
+                    const triplet0Copy = [...orientationData["tripletsCellsIndices"][triplet0Index]];
+                    triplet0Copy.splice(skippedCellIndex,1);
+                    const triplet0Bits2 = this.digitsListToBits([this.cells[triplet0Copy[0]],this.cells[triplet0Copy[1]]]);
+                    const skippedDigitBit = 1<<(this.cells[orientationData["tripletsCellsIndices"][triplet0Index][skippedCellIndex]]-1)
+                    const digitPairBits2 = triplet0Bits2 & (triplet1Bits-skippedDigitBit);
+
+                    for (const triplet2Index of box2Triplets) {
+                        const triplet2Bits = orientationData["tripletsBits"][triplet2Index];
+                        if (!this.twoBitsShared(digitPairBits2, triplet2Bits)) {
+                            continue
+                        }
+                        const triplet0Cells = this.tripletTargetCells(orientationData["tripletsCellsIndices"][triplet0Index],digitPairBits2);
+                        const triplet1Cells = this.tripletTargetCells(orientationData["tripletsCellsIndices"][triplet1Index],digitPairBits2);
+                        const triplet2Cells = this.tripletTargetCells(orientationData["tripletsCellsIndices"][triplet2Index],digitPairBits2);
+        
+                        this.transformations["digitSwaps1"].push([
+                            this.tripletTargetCells(triplet0Cells, digitPairBits2),
+                            this.tripletTargetCells(triplet1Cells, digitPairBits2),
+                            this.tripletTargetCells(triplet2Cells, digitPairBits2)
+                        ]);
+                    }
+                }
+                continue
+            }
+            const digitPairBits = triplet0Bits & triplet1Bits;
+            for (const triplet2Index of box2Triplets) {
+                const triplet2Bits = orientationData["tripletsBits"][triplet2Index];
+                if (this.twoBitsShared(digitPairBits, triplet2Bits)) {
+
+                    const triplet0Cells = this.tripletTargetCells(orientationData["tripletsCellsIndices"][triplet0Index],digitPairBits);
+                    const triplet1Cells = this.tripletTargetCells(orientationData["tripletsCellsIndices"][triplet1Index],digitPairBits);
+                    const triplet2Cells = this.tripletTargetCells(orientationData["tripletsCellsIndices"][triplet2Index],digitPairBits);
+
+                    this.transformations["digitSwaps1"].push([
+                        this.tripletTargetCells(triplet0Cells, digitPairBits),
+                        this.tripletTargetCells(triplet1Cells, digitPairBits),
+                        this.tripletTargetCells(triplet2Cells, digitPairBits)
+                    ]);
+
+                    if (sharedDigitsNumber == 2) {return [triplet1Index, triplet2Index]}
+                    
+                }
+            }
+        }
+        return null
+    }
+
+    digitSwaps2(targetBoxIndex, triplet0Index, skippedCellIndex, orientationData) {
+        const triplet0 = orientationData["tripletsCellsIndices"][triplet0Index];
+        const triplet0TargetCells = [...triplet0];
+        triplet0TargetCells.splice(skippedCellIndex,1);
+        const triplet0DigitPair = [
+            this.cells[triplet0TargetCells[0]],
+            this.cells[triplet0TargetCells[1]]];
+        const triplet0Bits = this.digitsListToBits(triplet0DigitPair);
+        for (const triplet1Index of orientationData["boxTriplets"][targetBoxIndex]) {
+            const triplet1CellIndices = orientationData["tripletsCellsIndices"][triplet1Index];
+            const triplet1TargetCells = [...triplet1CellIndices];
+            triplet1TargetCells.splice(skippedCellIndex,1);
+            const triplet1DigitPair = [
+                this.cells[triplet1TargetCells[0]],
+                this.cells[triplet1TargetCells[1]]];
+            const triplet1Bits = this.digitsListToBits(triplet1DigitPair);
+            if (triplet0Bits == triplet1Bits) {
+                this.transformations["digitSwaps2"].push(
+                    [triplet0TargetCells, triplet1TargetCells]);
+                return triplet1Index
+            }
+        }
+        return null
+    }
+
+    digitSwaps3(bandOrStackIndex, triplet0Index, skippedCellIndex, orientationData) {
+        const triplet0 = orientationData["tripletsCellsIndices"][triplet0Index];
+        const triplet0TargetCells = [...triplet0];
+        triplet0TargetCells.splice(skippedCellIndex,1);
+        const triplet0DigitPair = [this.cells[triplet0TargetCells[0]],
+                                this.cells[triplet0TargetCells[1]]];
+        const triplet0Bits = this.digitsListToBits(triplet0DigitPair);
+        const bandOrStackBoxes = orientationData["bandOrStackBoxes"][bandOrStackIndex];
+        const box1Index = bandOrStackBoxes[1];
+        const box2Index = bandOrStackBoxes[2];
+        const box1Triplets = orientationData["boxTriplets"][box1Index];
+        const box2Triplets = orientationData["boxTriplets"][box2Index];
+
+        for (const triplet1Index of box1Triplets) {
+            const triplet1 = orientationData["tripletsCellsIndices"][triplet1Index];
+            const triplet1TargetCells = [...triplet1];
+            triplet1TargetCells.splice(skippedCellIndex,1);
+            const triplet1DigitPair = [this.cells[triplet1TargetCells[0]],
+                                    this.cells[triplet1TargetCells[1]]];
+            const triplet1Bits = this.digitsListToBits(triplet1DigitPair);
+            if (!(this.countSetBits(triplet0Bits & triplet1Bits) == 1)){continue}
+            for (const triplet2Index of box2Triplets) {
+                const triplet2 = orientationData["tripletsCellsIndices"][triplet2Index];
+                const triplet2TargetCells = [...triplet2];
+                triplet2TargetCells.splice(skippedCellIndex,1);
+                const triplet2DigitPair = [this.cells[triplet2TargetCells[0]],
+                                        this.cells[triplet2TargetCells[1]]];
+                const triplet2Bits = this.digitsListToBits(triplet2DigitPair);
+
+                if ((triplet0Bits ^ triplet1Bits) == triplet2Bits) {
+                    this.transformations["digitSwaps3"].push(
+                        [triplet0TargetCells,
+                         triplet1TargetCells,
+                         triplet2TargetCells]
+                    );
+                    return [triplet1Index, triplet2Index]
+                }
+            }
+        }
+        return null
+    }
+
+    findTransformations() {
+        this.transformations = {
+            "tripletSwaps": [],
+            "digitSwaps1": [],
+            "digitSwaps2": [],
+            "digitSwaps3": []}
+        for (const horizontalOrVertical of ["horizontal", "vertical"]) {
+            const orientationData = this.getOrientationData(horizontalOrVertical);
+            for (const banOrStackIndex of [0,1,2]) {
+                for (const tripletBoxIndex of [0,1,2]) {
+                    const bandOrStackBoxes = orientationData["bandOrStackBoxes"];
+                    const Box0Index = bandOrStackBoxes[banOrStackIndex][0];
+                    const Box1Index = bandOrStackBoxes[banOrStackIndex][1];
+
+                    // Triplet Swaps Logic
+                    let triplet0Index = orientationData["boxTriplets"][Box0Index][tripletBoxIndex];
+                    this.tripletSwaps(
+                        bandOrStackBoxes[banOrStackIndex][1], triplet0Index, orientationData);
+                    this.tripletSwaps(
+                        bandOrStackBoxes[banOrStackIndex][2], triplet0Index, orientationData);
+                    triplet0Index = orientationData["boxTriplets"][Box1Index][tripletBoxIndex];
+                    this.tripletSwaps(
+                        bandOrStackBoxes[banOrStackIndex][2], triplet0Index, orientationData);
+
+                    // Digit Swaps 1 Logic
+                    triplet0Index = orientationData["boxTriplets"][Box0Index][tripletBoxIndex];
+                    this.digitSwaps1(banOrStackIndex,triplet0Index, orientationData);
+
+                    for (const skippedCellIndex of [0,1,2]) {
+                        // Digit Swaps 2 Logic
+                        this.digitSwaps2(
+                            bandOrStackBoxes[banOrStackIndex][1], triplet0Index, skippedCellIndex, orientationData);
+                        this.digitSwaps2(
+                            bandOrStackBoxes[banOrStackIndex][2], triplet0Index, skippedCellIndex, orientationData);
+                        triplet0Index = orientationData["boxTriplets"][Box1Index][tripletBoxIndex];
+                        this.digitSwaps2(
+                            bandOrStackBoxes[banOrStackIndex][2], triplet0Index, skippedCellIndex, orientationData);
+
+                        // Digit Swaps 3 Logic
+                        triplet0Index = orientationData["boxTriplets"][Box0Index][tripletBoxIndex];
+                        this.digitSwaps3(
+                            banOrStackIndex, triplet0Index, skippedCellIndex, orientationData);
+                    }
+                }
+            }
+        }
+    }
+
+    applyTransformation(cellPairs){
+        const swappedCellPairsDigits = [];
+        for (const cellPair of cellPairs) {
+            const cellDigit1 = this.cells[cellPair[0]];
+            const cellDigit2 = this.cells[cellPair[1]];
+            swappedCellPairsDigits.push([cellDigit2, cellDigit1]);
+            this.addOrRemoveDigit(cellPair[0], cellDigit1, true);
+            this.addOrRemoveDigit(cellPair[1], cellDigit2, true);
+        }
+        let counter = 0
+        for (const cellPair of cellPairs){
+            const cellDigit1 = swappedCellPairsDigits[counter][0];
+            const cellDigit2 = swappedCellPairsDigits[counter][1];
+            this.addOrRemoveDigit(cellPair[0], cellDigit1, false);
+            this.addOrRemoveDigit(cellPair[1], cellDigit2, false);
+            counter++;
+        }
     }
 }
