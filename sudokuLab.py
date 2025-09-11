@@ -14,6 +14,10 @@ class SudokuLab:
         self.rowBits = [0, 0, 0, 0, 0, 0, 0, 0, 0]
         # 1 bitmask per digit, 1 bit per intra-box position
         self.intraBoxPositions = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+        # 1 bitmask per horizontal triplet (9 bits).
+        self.horizontalTripletsBits = [0 for i in range(27)]
+        # 1 bitmask per vertical triplet (9 bits).
+        self.verticalTripletsBits = [0 for i in range(27)]
 
         # Look up tables for indices
         self.cellRow = []
@@ -29,6 +33,14 @@ class SudokuLab:
         self.verticalTriplets = [[] for i in range(27)]
         self.boxes = [[] for i in range(9)]
 
+        # Indices of horizontal and vertical triplets per box
+        self.boxesHTriplets = [[] for i in range(9)]
+        self.boxesVTriplets = [[] for i in range(9)]
+
+        # Indices of boxes per band and stack
+        self.bandBoxes = [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
+        self.stackBoxes = [[0, 3, 6], [1, 4, 7], [2, 5, 8]]
+
         self.fillLookUpTables()
 
         # Grid info
@@ -37,6 +49,11 @@ class SudokuLab:
 
         self.setNewGrid(sudokuString)
         self.gridsGenerated = []
+        self.transformations = {
+            "tripletSwaps": [],
+            "digitSwaps1": [],
+            "digitSwaps2": [],
+            "digitSwaps3": []}
 
     def fillLookUpTables(self):
         for i in range(81):
@@ -51,6 +68,12 @@ class SudokuLab:
             self.horizontalTriplets[self.cellHTriplet[i]].append(i)
             self.verticalTriplets[self.cellVTriplet[i]].append(i)
             self.boxes[self.cellBox[i]].append(i)
+
+        for i in range(27):
+            hTripletBox = (i % 3)+((i//9)*3)
+            vTripletBox = (i//3)
+            self.boxesHTriplets[hTripletBox].append(i)
+            self.boxesVTriplets[vTripletBox].append(i)
 
     def setNewGrid(self, newSudokuString):
         result = self.processSudokuString(newSudokuString)
@@ -67,8 +90,15 @@ class SudokuLab:
         self.colBits = [0, 0, 0, 0, 0, 0, 0, 0, 0]
         self.rowBits = [0, 0, 0, 0, 0, 0, 0, 0, 0]
         self.intraBoxPositions = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+        self.horizontalTripletsBits = [0 for i in range(27)]
+        self.verticalTripletsBits = [0 for i in range(27)]
         self.isGridValid = True
         self.isGridComplete = True
+        self.transformations = {
+            "tripletSwaps": [],
+            "digitSwaps1": [],
+            "digitSwaps2": [],
+            "digitSwaps3": []}
 
     def processSudokuString(self, sudokuString):
         if not isinstance(sudokuString, str):
@@ -105,12 +135,16 @@ class SudokuLab:
         boxIndex = self.cellBox[cellIndex]
         rowIndex = self.cellRow[cellIndex]
         colIndex = self.cellCol[cellIndex]
+        hTripletIndex = self.cellHTriplet[cellIndex]
+        vTripletIndex = self.cellVTriplet[cellIndex]
         if not remove:
             self.boxBits[boxIndex] |= bit
             self.rowBits[rowIndex] |= bit
             self.colBits[colIndex] |= bit
             self.intraBoxPositions[digit -
                                    1] |= (1 << ((colIndex % 3) + ((rowIndex % 3)*3)))
+            self.horizontalTripletsBits[hTripletIndex] |= bit
+            self.verticalTripletsBits[vTripletIndex] |= bit
             self.cells[cellIndex] = digit
         else:
             self.boxBits[boxIndex] &= ~bit
@@ -118,6 +152,8 @@ class SudokuLab:
             self.colBits[colIndex] &= ~bit
             self.intraBoxPositions[digit -
                                    1] &= ~(1 << ((colIndex % 3) + ((rowIndex % 3)*3)))
+            self.horizontalTripletsBits[hTripletIndex] &= ~bit
+            self.verticalTripletsBits[vTripletIndex] &= ~bit
             self.cells[cellIndex] = 0
 
     def isDigitRepeated(self, cellIndex, digit):
@@ -141,6 +177,12 @@ class SudokuLab:
             digitsBits &= (digitsBits-1)
         return digitsList
 
+    def digitsListToBits(self, digitsList=[]):
+        bits = 0
+        for digit in digitsList:
+            bits |= 1 << (digit-1)
+        return bits
+
     @staticmethod
     def onlyOneBitSet(bits):
         return not (bits & (bits - 1))
@@ -162,11 +204,13 @@ class SudokuLab:
 
     def getSudokuString(self):
         return self.listToString(self.cells)
-    
+
     def generateRandomGrids(self, numberOfGridsToGenerate):
         colBits = self.colBits.copy()
         rowBits = self.rowBits.copy()
         boxBits = self.boxBits.copy()
+        hTripletsBits = self.horizontalTripletsBits.copy()
+        vTripletsBits = self.verticalTripletsBits.copy()
         IBPositions = self.intraBoxPositions.copy()
         gridCells = self.cells.copy()
         isGridValid = self.isGridValid
@@ -180,6 +224,8 @@ class SudokuLab:
         self.colBits = colBits
         self.rowBits = rowBits
         self.boxBits = boxBits
+        self.horizontalTripletsBits = hTripletsBits
+        self.verticalTripletsBits = vTripletsBits
         self.intraBoxPositions = IBPositions
         self.isGridComplete = isGridComplete
         self.isGridValid = isGridValid
@@ -403,3 +449,249 @@ class SudokuLab:
             }
         }
         return report
+
+    def tripletTargetCells(self, tripletCellsIndices, digitPairBits):
+        targetCells = []
+        for cellIndex in tripletCellsIndices:
+            digit = self.cells[cellIndex]
+            if digitPairBits & (1 << (digit-1)):
+                targetCells.append(cellIndex)
+        return targetCells
+
+    def twoBitsShared(self, bitmask1, bitmask2):
+        return ((bitmask1 & bitmask2).bit_count() == 2)
+
+    def getOrientationData(self, orientation="horizontal"):
+        orientationData = {}
+        if orientation == "horizontal":
+            orientationData["boxTriplets"] = self.boxesHTriplets
+            orientationData["tripletsBits"] = self.horizontalTripletsBits
+            orientationData["tripletsCellsIndices"] = self.horizontalTriplets
+            orientationData["bandOrStackBoxes"] = self.stackBoxes
+        elif orientation == "vertical":
+            orientationData["boxTriplets"] = self.boxesVTriplets
+            orientationData["tripletsBits"] = self.verticalTripletsBits
+            orientationData["tripletsCellsIndices"] = self.verticalTriplets
+            orientationData["bandOrStackBoxes"] = self.bandBoxes
+        return orientationData
+
+    def tripletSwaps(self, targetBoxIndex, triplet0Index, orientationData):
+        triplet0Bits = orientationData["tripletsBits"][triplet0Index]
+        for triplet1Index in orientationData["boxTriplets"][targetBoxIndex]:
+            triplet1Bits = orientationData["tripletsBits"][triplet1Index]
+            if triplet0Bits == triplet1Bits:
+                triplet0Cells = orientationData["tripletsCellsIndices"][triplet0Index]
+                triplet1Cells = orientationData["tripletsCellsIndices"][triplet1Index]
+                cellPair1 = [triplet0Cells[0], triplet1Cells[0]]
+                cellPair2 = [triplet0Cells[1], triplet1Cells[1]]
+                cellPair3 = [triplet0Cells[2], triplet1Cells[2]]
+                self.transformations["tripletSwaps"].append(
+                    [cellPair1, cellPair2, cellPair3])
+                return triplet1Index
+        return None
+
+    def digitSwaps1(self, bandOrStackIndex, triplet0Index, orientationData):
+        triplet0Bits = orientationData["tripletsBits"][triplet0Index]
+        bandOrStackBoxes = orientationData["bandOrStackBoxes"][bandOrStackIndex]
+        box1Index = bandOrStackBoxes[1]
+        box2Index = bandOrStackBoxes[2]
+        box1Triplets = orientationData["boxTriplets"][box1Index]
+        box2Triplets = orientationData["boxTriplets"][box2Index]
+
+        for triplet1Index in box1Triplets:
+            triplet1Bits = orientationData["tripletsBits"][triplet1Index]
+            sharedDigitsNumber = (triplet0Bits & triplet1Bits).bit_count()
+            if not (sharedDigitsNumber >= 2):
+                continue
+            if sharedDigitsNumber == 3:
+                for skippedCellIndex in range(3):
+                    triplet0Copy = orientationData["tripletsCellsIndices"][triplet0Index][:]
+                    triplet0Copy = triplet0Copy[:skippedCellIndex] + \
+                        triplet0Copy[skippedCellIndex+1:]
+                    triplet0Bits2 = self.digitsListToBits(
+                        [self.cells[triplet0Copy[0]], self.cells[triplet0Copy[1]]])
+                    skippedDigitBit = 1 << (
+                        self.cells[orientationData["tripletsCellsIndices"][triplet0Index][skippedCellIndex]]-1)
+                    digitPairBits2 = triplet0Bits2 & (
+                        triplet1Bits-skippedDigitBit)
+
+                    for triplet2Index in box2Triplets:
+                        triplet2Bits = orientationData["tripletsBits"][triplet2Index]
+                        if not self.twoBitsShared(digitPairBits2, triplet2Bits):
+                            continue
+                        triplet0Cells = self.tripletTargetCells(
+                            orientationData["tripletsCellsIndices"][triplet0Index], digitPairBits2)
+                        triplet1Cells = self.tripletTargetCells(
+                            orientationData["tripletsCellsIndices"][triplet1Index], digitPairBits2)
+                        triplet2Cells = self.tripletTargetCells(
+                            orientationData["tripletsCellsIndices"][triplet2Index], digitPairBits2)
+
+                        self.transformations["digitSwaps1"].append([
+                            self.tripletTargetCells(
+                                triplet0Cells, digitPairBits2),
+                            self.tripletTargetCells(
+                                triplet1Cells, digitPairBits2),
+                            self.tripletTargetCells(
+                                triplet2Cells, digitPairBits2)
+                        ])
+                continue
+
+            digitPairBits = triplet0Bits & triplet1Bits
+            for triplet2Index in box2Triplets:
+                triplet2Bits = orientationData["tripletsBits"][triplet2Index]
+                if self.twoBitsShared(digitPairBits, triplet2Bits):
+
+                    triplet0Cells = self.tripletTargetCells(
+                        orientationData["tripletsCellsIndices"][triplet0Index], digitPairBits)
+                    triplet1Cells = self.tripletTargetCells(
+                        orientationData["tripletsCellsIndices"][triplet1Index], digitPairBits)
+                    triplet2Cells = self.tripletTargetCells(
+                        orientationData["tripletsCellsIndices"][triplet2Index], digitPairBits)
+
+                    self.transformations["digitSwaps1"].append([
+                        self.tripletTargetCells(triplet0Cells, digitPairBits),
+                        self.tripletTargetCells(triplet1Cells, digitPairBits),
+                        self.tripletTargetCells(triplet2Cells, digitPairBits)
+                    ])
+
+                    if sharedDigitsNumber == 2:
+                        return [triplet1Index, triplet2Index]
+        return None
+
+    def digitSwaps2(self, targetBoxIndex, triplet0Index, skippedCellIndex, orientationData):
+        triplet0 = orientationData["tripletsCellsIndices"][triplet0Index]
+        triplet0TargetCells = triplet0[:skippedCellIndex] + \
+            triplet0[skippedCellIndex+1:]
+        triplet0DigitPair = [self.cells[triplet0TargetCells[0]],
+                             self.cells[triplet0TargetCells[1]]]
+        triplet0Bits = self.digitsListToBits(triplet0DigitPair)
+        for triplet1Index in orientationData["boxTriplets"][targetBoxIndex]:
+            triplet1CellIndices = orientationData["tripletsCellsIndices"][triplet1Index]
+            triplet1TargetCells = triplet1CellIndices[:skippedCellIndex] + \
+                triplet1CellIndices[skippedCellIndex+1:]
+            triplet1DigitPair = [self.cells[triplet1TargetCells[0]],
+                                 self.cells[triplet1TargetCells[1]]]
+            triplet1Bits = self.digitsListToBits(triplet1DigitPair)
+            if triplet0Bits == triplet1Bits:
+                self.transformations["digitSwaps2"].append(
+                    [triplet0TargetCells, triplet1TargetCells])
+                return triplet1Index
+        return None
+
+    def digitSwaps3(self, bandOrStackIndex, triplet0Index, skippedCellIndex, orientationData):
+        triplet0 = orientationData["tripletsCellsIndices"][triplet0Index]
+        triplet0TargetCells = triplet0[:skippedCellIndex] + \
+            triplet0[skippedCellIndex+1:]
+        triplet0DigitPair = [self.cells[triplet0TargetCells[0]],
+                             self.cells[triplet0TargetCells[1]]]
+        triplet0Bits = self.digitsListToBits(triplet0DigitPair)
+        bandOrStackBoxes = orientationData["bandOrStackBoxes"][bandOrStackIndex]
+        box1Index = bandOrStackBoxes[1]
+        box2Index = bandOrStackBoxes[2]
+        box1Triplets = orientationData["boxTriplets"][box1Index]
+        box2Triplets = orientationData["boxTriplets"][box2Index]
+
+        for triplet1Index in box1Triplets:
+            triplet1 = orientationData["tripletsCellsIndices"][triplet1Index]
+            triplet1TargetCells = triplet1[:skippedCellIndex] + \
+                triplet1[skippedCellIndex+1:]
+            triplet1DigitPair = [self.cells[triplet1TargetCells[0]],
+                                 self.cells[triplet1TargetCells[1]]]
+            triplet1Bits = self.digitsListToBits(triplet1DigitPair)
+            if not ((triplet0Bits & triplet1Bits).bit_count() == 1):
+                continue
+            for triplet2Index in box2Triplets:
+                triplet2 = orientationData["tripletsCellsIndices"][triplet2Index]
+                triplet2TargetCells = triplet2[:skippedCellIndex] + \
+                    triplet2[skippedCellIndex+1:]
+                triplet2DigitPair = [self.cells[triplet2TargetCells[0]],
+                                     self.cells[triplet2TargetCells[1]]]
+                triplet2Bits = self.digitsListToBits(triplet2DigitPair)
+                if (triplet0Bits ^ triplet1Bits) == triplet2Bits:
+
+                    self.transformations["digitSwaps3"].append(
+                        [triplet0TargetCells,
+                         triplet1TargetCells,
+                         triplet2TargetCells]
+                    )
+
+                    return [triplet1Index, triplet2Index]
+        return None
+
+    def findTransformations(self):
+        self.transformations = {
+            "tripletSwaps": [],
+            "digitSwaps1": [],
+            "digitSwaps2": [],
+            "digitSwaps3": []}
+        for orientation in ["horizontal", "vertical"]:
+            orientationData = self.getOrientationData(orientation)
+            for banOrStackIndex in range(3):
+                for tripletBoxIndex in range(3):
+                    bandOrStackBoxes = orientationData["bandOrStackBoxes"]
+                    Box0Index = bandOrStackBoxes[banOrStackIndex][0]
+                    Box1Index = bandOrStackBoxes[banOrStackIndex][1]
+
+                    # Triplet Swaps Logic
+                    triplet0Index = orientationData["boxTriplets"][Box0Index][tripletBoxIndex]
+                    self.tripletSwaps(
+                        bandOrStackBoxes[banOrStackIndex][1], triplet0Index, orientationData)
+                    self.tripletSwaps(
+                        bandOrStackBoxes[banOrStackIndex][2], triplet0Index, orientationData)
+                    triplet0Index = orientationData["boxTriplets"][Box1Index][tripletBoxIndex]
+                    self.tripletSwaps(
+                        bandOrStackBoxes[banOrStackIndex][2], triplet0Index, orientationData)
+
+                    # Digit Swaps 1 Logic
+                    triplet0Index = orientationData["boxTriplets"][Box0Index][tripletBoxIndex]
+                    self.digitSwaps1(banOrStackIndex,
+                                     triplet0Index, orientationData)
+
+                    for skippedCellIndex in range(3):
+                        # Digit Swaps 2 Logic
+                        self.digitSwaps2(
+                            bandOrStackBoxes[banOrStackIndex][1], triplet0Index, skippedCellIndex, orientationData)
+                        self.digitSwaps2(
+                            bandOrStackBoxes[banOrStackIndex][2], triplet0Index, skippedCellIndex, orientationData)
+                        triplet0Index = orientationData["boxTriplets"][Box1Index][tripletBoxIndex]
+                        self.digitSwaps2(
+                            bandOrStackBoxes[banOrStackIndex][2], triplet0Index, skippedCellIndex, orientationData)
+
+                        # Digit Swaps 3 Logic
+                        triplet0Index = orientationData["boxTriplets"][Box0Index][tripletBoxIndex]
+                        self.digitSwaps3(
+                            banOrStackIndex, triplet0Index, skippedCellIndex, orientationData)
+
+    def printTransformationCellPairs(self, cellPairs):
+        cellIndices = set()
+        for cellPair in cellPairs:
+            cellIndices.add(cellPair[0])
+            cellIndices.add(cellPair[1])
+        print("-------------")
+        for i in range(81):
+            if (i) % 3 == 0 and not ((i+1) % 9 == 0):
+                print("|", end="")
+            if i in cellIndices:
+                print("O", end="")
+            else:
+                print("/", end="")
+
+            if (i+1) % 9 == 0:
+                print("|")
+            if (i+1) % 27 == 0:
+                print("-------------")
+        print("")
+
+    def applyTransformation(self, cellPairs):
+        swappedCellPairsDigits = []
+        for cellPair in cellPairs:
+            cellDigit1 = self.cells[cellPair[0]]
+            cellDigit2 = self.cells[cellPair[1]]
+            swappedCellPairsDigits.append([cellDigit2, cellDigit1])
+            self.addOrRemoveDigit(cellPair[0], cellDigit1, True)
+            self.addOrRemoveDigit(cellPair[1], cellDigit2, True)
+        for i, cellPair in enumerate(cellPairs):
+            cellDigit1 = swappedCellPairsDigits[i][0]
+            cellDigit2 = swappedCellPairsDigits[i][1]
+            self.addOrRemoveDigit(cellPair[0], cellDigit1, False)
+            self.addOrRemoveDigit(cellPair[1], cellDigit2, False)

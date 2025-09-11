@@ -1,44 +1,194 @@
 body {
+  margin: 0px;
+  padding: 0px;
+}
+
+#guiSection {
   display: flex;
   justify-content: center;
   align-items: top;
-  padding: 40px 20px 40px 20px;
-  min-height: 700px;
+  min-height: 660px;
+  max-height: 700px;
+  /*background: linear-gradient(135deg, rgb(205, 212, 230), rgb(197, 197, 221));*/
+  background: linear-gradient(170deg, rgb(68, 70, 78), rgb(59, 59, 72));
+}
+
+#transformationsPanel {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px 30px 30px 30px;
+  flex: 6;
+  min-width: 270px;
+  background: linear-gradient(135deg, rgb(27, 28, 30), rgb(18, 18, 21));
+  color: white;
+}
+#transformationsHeading {
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: bold;
+  font-size: 16px;
+  width: 100%;
+  text-align: center;
+  margin: 0px 0px 15px 0px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid rgb(118, 118, 129);
+  color: rgb(237, 237, 237);
+}
+
+#transformationsList {
+  overflow-y: auto;
+  overflow-x: hidden;
+  width: 100%;
+  height: 466px;
+  border-radius: 3px;
+  background-color: rgba(70, 70, 88, 0.21);
+  margin: 10px 0px 0px 0px;
+}
+#transformationsList::-webkit-scrollbar {
+  background: transparent;
+  width: 10px;
+  margin-left: 25px;
+}
+#transformationsList::-webkit-scrollbar-thumb {
+  background: rgba(71, 71, 82, 0.7);
+  border-radius: 100px;
+}
+#transformationsList::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 99, 119, 0.7);
+}
+
+.transformationElement {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  border-bottom: 1px solid rgb(62, 62, 66);
+  height: 40px;
+  background-color: transparent;
+
+  transition: background-color 0.1s;
+}
+.transformationElement:hover {
+  background-color: rgb(46, 47, 56);
+}
+
+.transformationElementClicked {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  border-bottom: 1px solid rgb(67, 67, 72);
+  height: 40px;
+  background-color: rgb(54, 54, 67);
+
+  transition: background-color 0.1s;
+}
+
+.transformationColor {
+  height: 100%;
+  width: 5px;
+  aspect-ratio: 1/1;
+}
+.transformationCells {
+  color: rgb(219, 219, 224);
+  padding: 0px 0px;
+  margin: 0px 0px 0px 0px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 12px;
+  user-select: none;
+  text-align: center;
+  width: 100%;
+}
+
+#applyTransformationButton {
+  width: 100%;
+  background-color: rgb(62, 62, 81);
+  color: white;
+  border: none;
+  border-radius: 3px;
+  user-select: none;
+  font-family: Arial, Helvetica, sans-serif;
+  margin: 30px 0px 20px 0px;
+  font-size: 16px;
+  height: 40px;
+  padding: 0px 18px;
+}
+#applyTransformationButton:hover {
+  background-color: rgb(72, 72, 90);
+  cursor: pointer;
+}
+#applyTransformationButton:active {
+  background-color: rgb(79, 79, 95);
+}
+
+#gridSectionWrapper {
+  display: flex;
+  flex-direction: column;
+  flex: 12;
+  align-items: center;
+}
+
+#gridInfoWrapper {
+  box-sizing: border-box;
+  background: linear-gradient(
+    135deg,
+    rgba(34, 34, 41, 0.65),
+    rgba(30, 30, 35, 0.65)
+  );
+  color: rgb(200, 200, 200);
+
+  display: grid;
+  grid-template-columns: auto auto;
+  font-size: 12px;
+  font-family: Arial, Helvetica, sans-serif;
+  width: 100%;
+}
+#gridInfoWrapper p {
+  padding: 10px 10px;
+  margin: 0px;
+  text-align: center;
 }
 
 #wrapper1 {
-  border: 1px solid rgba(0, 0, 0, 0);
+  border: 1px solid rgba(255, 40, 40, 0);
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  height: fit-content;
+  justify-content: top;
+  align-items: center;
+
+  padding: 26px 30px 40px 30px;
+  height: 100%;
 }
 
 #grid {
+  box-sizing: border-box;
   overflow: hidden;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   row-gap: 2px;
   column-gap: 2px;
   position: relative;
-  border: 2px solid rgb(31, 31, 51);
-  background-color: rgb(70, 70, 83);
+  border: 2px solid rgb(16, 16, 26);
+  /*background-color: rgb(96, 96, 105);*/
+  background-color: rgb(31, 31, 36);
   border-radius: 3px;
-  width: 470px;
-  height: 470px;
+  width: 460px;
+  height: 460px;
+  user-select: none;
 }
 .box {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   row-gap: 1px;
   column-gap: 1px;
-  background-color: rgb(157, 157, 176);
+  /*background-color: rgb(157, 157, 176);*/
+  background-color: rgb(27, 27, 32);
   aspect-ratio: 1/1;
 }
 .cell {
   overflow: hidden;
   display: flex;
-  background-color: rgb(255, 255, 255);
+  /*background-color: rgb(255, 255, 255);*/
+  background-color: rgb(251, 251, 251);
   justify-content: center;
   align-items: center;
   aspect-ratio: 1/1;
@@ -57,66 +207,97 @@ canvas {
 }
 
 #wrapper2 {
+  box-sizing: border-box;
   position: relative;
   display: flex;
-  flex: 1;
+  width: 460px;
   justify-content: center;
   align-items: center;
-  margin: 30px 0px 0px 0px;
+  margin: 10px 0px 0px 0px;
 }
 
 #wrapper2 button {
   user-select: none;
   font-family: Arial, Helvetica, sans-serif;
-  margin: 0px 10px 0px 0px;
+  margin: 0px 0px 0px 0px;
   font-size: 16px;
   height: 40px;
   padding: 0px 18px;
   border: none;
-  border-radius: 1px;
-  background-color: rgb(45, 45, 60);
+  border-top-right-radius: 3px;
+  border-bottom-right-radius: 3px;
+  /*background-color: rgb(45, 45, 60);*/
+  background-color: rgb(21, 21, 25);
   color: white;
-}
-#wrapper2 button:hover {
-  background-color: rgb(74, 74, 96);
   cursor: pointer;
 }
+#wrapper2 button:hover {
+  background-color: rgb(28, 28, 35);
+}
 #wrapper2 button:active {
-  background-color: rgb(109, 109, 135);
+  background-color: rgb(30, 30, 36);
 }
 
 #gridDigitsInput {
   border: 1px solid rgb(51, 53, 63);
   height: 40px;
   flex: 1;
-  border-radius: 5px;
+  border-top-left-radius: 3px;
+  border-bottom-left-radius: 3px;
   padding: 0px 12px;
   font-size: 16px;
+  outline: none;
+}
+#gridDigitsInput:focus {
+  box-shadow: inset 0px 0px 0px 1px rgb(41, 45, 56);
 }
 
 #inputAlert {
   position: absolute;
   top: 36px;
-  left: 120px;
   font-family: Arial, Helvetica, sans-serif;
-  font-size: 14px;
+  font-size: 15px;
   display: none;
-  color: rgb(189, 22, 22);
+  color: rgb(255, 130, 130);
   user-select: none;
 }
 
+#randomGridButton {
+  user-select: none;
+  font-family: Arial, Helvetica, sans-serif;
+  margin: 20px 0px 0px 0px;
+  font-size: 16px;
+  height: 40px;
+  width: 460px;
+  padding: 0px 18px;
+  border: none;
+  border-radius: 3px;
+  /*background-color: rgb(45, 45, 60);*/
+  background-color: rgb(21, 21, 25);
+  color: white;
+  cursor: pointer;
+}
+#randomGridButton:hover {
+  background-color: rgb(28, 28, 35);
+}
+#randomGridButton:active {
+  background-color: rgb(30, 30, 36);
+}
+
+/*PATTERN METRICS PANEL ##############################################################*/
+
 #patternsMetrics {
+  display: flex;
+  flex-direction: column;
   position: relative;
   box-sizing: border-box;
-  border: 1px solid rgb(158, 162, 181);
-  border-radius: 2px;
-  background-color: rgb(229, 232, 248);
-  min-height: 545px;
-  height: fit-content;
-  width: 400px;
-  margin-left: 43px;
-  padding: 30px 30px 160px 30px;
+  background-color: rgb(85, 85, 91);
+  background: linear-gradient(135deg, rgb(27, 28, 30), rgb(18, 18, 21));
+  flex: 6;
+  min-width: 370px;
+  padding: 30px 30px 30px 30px;
   font-family: Arial, Helvetica, sans-serif;
+  color: rgb(237, 237, 237);
 }
 #patternsMetricsHeading {
   font-weight: bold;
@@ -124,32 +305,67 @@ canvas {
   text-align: center;
   margin: 0px 0px 15px 0px;
   padding-bottom: 15px;
-  border-bottom: 1px solid rgb(108, 108, 117);
+  border-bottom: 1px solid rgb(118, 118, 129);
 }
 
-#wrapper4 {
-  font-size: 14px;
-  border: 1px solid rgba(0, 0, 0, 0);
+#showMetricsButton {
+  display: flex;
+  align-items: center;
+  color: rgb(204, 204, 204);
+  margin: 5px 0px 0px 0px;
+  cursor: pointer;
+  user-select: none;
+  width: fit-content;
+  padding: 3px 25px 3px 15px;
+  border-radius: 40px;
+  border: 1px solid rgba(182, 181, 194, 0.374);
+
+  transition: background-color 0.15s;
 }
-#gridInfoHeading {
-  margin: 10px 0px 5px 0px;
-  font-weight: bolder;
-  font-size: 14px;
+#showMetricsButton:hover {
+  border: 1px solid rgba(182, 181, 194, 0.55);
 }
+
+#showMetricsText {
+  border: none;
+  background-color: transparent;
+  padding: 0px;
+  font-size: 12px;
+  margin: 0px;
+}
+#showMetricsArrow {
+  transform: rotate(90deg);
+  margin: 0px;
+  padding: 0px;
+  position: relative;
+  left: 10px;
+
+  transition: transform 0.3s, top 0.3s;
+}
+
 .gridInfo {
   margin: 3px 0px;
+}
+#completeness {
+  border-left: 1px solid rgb(82, 82, 82);
+}
+
+#patternsInfoWrapper {
+  border: 1px solid rgba(0, 0, 255, 0);
+  flex: 1;
 }
 
 .patternInfo {
   position: relative;
+  margin-top: 25px;
 }
 .patternName {
-  font-weight: bold;
   font-size: 14px;
-  margin: 25px 0px 10px 0px;
+  margin: 0px 0px 10px 0px;
 }
 .proximityBar {
-  border: 1px solid rgb(108, 109, 115);
+  border: 1px solid rgb(26, 27, 33);
+  background-color: rgb(86, 86, 93);
   border-radius: 15px;
   width: 100%;
   height: 6px;
@@ -160,7 +376,7 @@ canvas {
   width: 0%;
   background-color: rgb(243, 90, 105); /*rgb(81, 234, 157);*/
   height: 100%;
-  transition: width 0.6s, background-color 1.6s;
+  transition: width 0.45s, background-color 0.85s;
 }
 .percentage {
   font-family: Arial, Helvetica, sans-serif;
@@ -178,24 +394,10 @@ canvas {
   transition: height 0.6s, opacity 0.6s;
 }
 .proximityMetric {
-  font-size: 14px;
-  margin: 5px 0px 0px 0px;
-}
-
-#wrapper3 {
-  position: absolute;
-  bottom: 23px;
-  width: 340px;
-  border: 1px solid rgba(0, 0, 0, 0);
-}
-#wrapper3 label {
   font-size: 12px;
-}
+  margin: 5px 0px 0px 0px;
 
-#visualizationToggle {
-  margin-bottom: 1px;
-  position: relative;
-  top: 2px;
+  color: rgb(204, 204, 204);
 }
 
 #analyzeButton {
@@ -203,30 +405,26 @@ canvas {
   display: block;
   user-select: none;
   font-family: Arial, Helvetica, sans-serif;
-  margin: 10px 0px 10px 0px;
+  margin: 20px 0px 20px 0px;
   font-size: 16px;
   height: 40px;
   padding: 0px 18px;
   border: none;
-  border-radius: 1px;
-  background-color: rgb(45, 45, 60);
+  border-radius: 3px;
+  background-color: rgb(62, 62, 81);
   color: white;
 }
 #analyzeButton:hover {
-  background-color: rgb(74, 74, 96);
+  background-color: rgb(72, 72, 90);
   cursor: pointer;
 }
 #analyzeButton:active {
-  background-color: rgb(109, 109, 135);
+  background-color: rgb(79, 79, 95);
 }
-#info {
-  font-size: 12px;
-  margin: 10px 0px 0px 0px;
-  color: rgb(58, 58, 60);
-}
+
 #analysisAlert {
   position: absolute;
-  bottom: -45px;
+  bottom: 90px;
   left: 0px;
   text-align: center;
   width: 100%;
@@ -234,5 +432,18 @@ canvas {
   font-size: 14px;
   display: none;
   user-select: none;
-  color: rgb(189, 22, 22);
+  color: rgb(255, 116, 116);
+}
+
+#section2 {
+  background-color: rgb(21, 21, 21);
+  height: 100px;
+  width: 100%;
+  background: linear-gradient(
+    270deg,
+    rgb(15, 17, 33),
+    rgb(21, 21, 21),
+    rgb(14, 27, 25)
+  );
+  border-top: 1px solid rgb(47, 47, 48);
 }
