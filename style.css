@@ -21,7 +21,7 @@ body {
   padding: 30px 30px 30px 30px;
   flex: 6;
   min-width: 270px;
-  background: linear-gradient(135deg, rgb(32, 33, 36), rgb(21, 21, 25));
+  background: linear-gradient(135deg, rgb(27, 28, 30), rgb(18, 18, 21));
   color: white;
 }
 #transformationsHeading {
@@ -62,7 +62,7 @@ body {
   display: flex;
   align-items: center;
   cursor: pointer;
-  border-bottom: 1px solid rgb(67, 67, 72);
+  border-bottom: 1px solid rgb(62, 62, 66);
   height: 40px;
   background-color: transparent;
 
@@ -292,7 +292,7 @@ canvas {
   position: relative;
   box-sizing: border-box;
   background-color: rgb(85, 85, 91);
-  background: linear-gradient(135deg, rgb(32, 33, 36), rgb(21, 21, 25));
+  background: linear-gradient(135deg, rgb(27, 28, 30), rgb(18, 18, 21));
   flex: 6;
   min-width: 370px;
   padding: 30px 30px 30px 30px;
