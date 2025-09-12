@@ -2,20 +2,20 @@
 
 Sudoku Lab is a tool to experiment with sudoku configurations.
 
-It has features for analysis of patterns, generation of configurations, visualization and more.
+It has features for analysis of patterns, detection of transformations, generation of configurations, visualization and more.
 
-It can be used through an API, or through a graphical user interface to visualize some of its features.
+It can be used through an API or through the [Sudoku Lab graphical user interface](https://joaquin-e-serraiti.github.io/jes-sudoku-lab/).
 
-![ScreenshotSudokuTool](https://github.com/user-attachments/assets/60e7eced-bb6d-4f93-9721-77e33f8a5876)
+![sudokuLabGUIScreenshot2](https://github.com/user-attachments/assets/d8265217-f2f0-4d50-a1d2-63e643cb53ad)
 
-
-Try the graphical user interface in your browser: [Sudoku Lab GUI](https://joaquin-e-serraiti.github.io/jes-sudoku-lab/)
 
 ## How to use the graphical user interface
 
-1. Input a Sudoku configuration as a string of 81 characters. The valid characters are 1,2,3,4,5,6,7,8,9 and 0 or . for empty cells.
-2. Press the “Analyze Patterns” button to see pattern metrics displayed. Only complete and valid configurations can be analyzed.
-3. To visualize the analysis process, check the "Visualize analysis" box before pressing the "Analize Patterns" button.
+1. You can generate a random configuration/grid or input a Sudoku configuration as a string of 81 characters. The valid characters are 1,2,3,4,5,6,7,8,9 and 0 or . for empty cells.
+2. In the left panel will be displayed the patterns metrics and the proximity of the current configuration to each pattern.
+3. The “Visualize analysis” button will show a visualization of the patterns analysis process when clicked. Only complete and valid configurations can be analyzed.
+4. In the right panel will appear all the available transformations.
+5. The "Apply transformation" button will apply the transformation selected and modify the current configuration.
 
 ### Sudoku strings to try
 
@@ -23,7 +23,7 @@ Try the graphical user interface in your browser: [Sudoku Lab GUI](https://joaqu
 - 478921653132657498965843712349278165256319847781564239817495326524736981693182574
 - 123456789456789123789123456312645978645978312978312645231564897564897231897231564
 
-The analysis and the patterns are based on this article: [Classification of Sudoku Patterns and Transformations](/Classification%20of%20Sudoku%20Patterns%20and%20Transformations.pdf). I recommend reading it to understand the patterns analyzed and the analysis process.
+The patterns and transformations are based on this article: [Classification of Sudoku Patterns and Transformations](/Classification%20of%20Sudoku%20Patterns%20and%20Transformations.pdf). I recommend reading it to understand how this tool works.
 
 > [!IMPORTANT]
 > The article linked above currently has some incorrect information and will be updated in the future. Specifically, the statement "every configuration that satisfies the Digit Adjacency Consistency pattern (DAC) also satisfies the Triplet Digit Consistency pattern (TDC)" is incorrect.
@@ -95,6 +95,32 @@ The analysis and the patterns are based on this article: [Classification of Sudo
             }
         }
    ```
+7. To get the available transformations for the current grid, first call the `findTransformations()` method, then access the `transformations` attribute:
+   ```py
+      sudokuLab.findTransformations()
+      transformations = sudokuLab.transformations
+   ```
+8. The `transformations` attribute is a dictionary with 1 list for each one of the 4 different types of transformations. Each lists contains 1 list for each transformation of that type. Each of those lists contains up to three lists with pairs of cell indices. Those are the cells that have to be swapped for the transformation to be applied. Here is an example of how the dictionary looks:
+   ```py
+      {
+         "tripletSwaps": [[[0,3],[9,12],[18,21]],[[1,4],[10,13],[19,22]]],
+         "digitSwaps1": [[[0,1],[28,29],[54,56]],[[9,10],[37,39],[63,65]]],
+         "digitSwaps2": [[[0,3],[9,12]],[[2,11],[4,13]]],
+         "digitSwaps3": [[[1,10],[5,14],[6,15]],[[65,74],[68,77],[71,80]]]
+      }
+   ```
+9. To apply a transformation to the current configuration/grid, the `applyTransformation()` method is used. Here is an usage example:
+    ```py
+       sudokuLab.findTransformations()
+       transformationSelected = sudokuLab.transformations["digitSwaps3"][0]
+       sudokuLab.applyTransformation(transformationSelected)
+   ```
+10. To generate random configurations (complete grids), you can use the `generateRandomGrids()` method. It takes a number of configurations/grids to generate as an argument, and returns a list of that many sudoku strings, randomly generated.
+   ```py
+      randomConfigs = sudokuLab.generateRandomGrids(100) # This generates 100 random sudoku strings
+      sudokuLab.setNewGrid(randomConfigs[0]) # This takes the first sudoku string of the list and sets it as the current grid 
+   ```
+
 
 ## How the patterns are analyzed
 
