@@ -12,8 +12,8 @@ export class SudokuLab {
         this.colBits = [0,0,0,0,0,0,0,0,0]
 
         // Triplets bitmasks. 1 bitmask per triplet (9 bits)
-        this.horizontalTripletsBits = Array(81).fill(27);
-        this.verticalTripletsBits = Array(81).fill(27);
+        this.horizontalTripletsBits = Array(27).fill(0);
+        this.verticalTripletsBits = Array(27).fill(0);
 
         // Look up tables for indices
         this.cellRow = [];
@@ -822,3 +822,4 @@ export class SudokuLab {
         }
     }
 }
+
