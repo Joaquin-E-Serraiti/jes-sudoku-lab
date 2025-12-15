@@ -80,7 +80,10 @@
             </div>
           </div>
         </div>
-        <button id="analyzeButton">Visualize analisys</button>
+        <button id="analyzeButton">
+          Visualize analisys
+          <div id="visualizationProgressBar"></div>
+        </button>
         <p id="analysisAlert">Invalid or incomplete grids can't be analyzed</p>
       </div>
       <div id="gridSectionWrapper">
@@ -94,8 +97,15 @@
         </div>
         <div id="wrapper1">
           <div id="grid"><canvas id="gridCanvas"></canvas></div>
-          <button id="randomGridButton">Generate random grid</button>
+
+          <div id="wrapper3">
+            <button id="clearGridButton">Clear grid</button>
+            <button id="randomGridButton">Generate random</button>
+            <button id="fillCellsButton">Fill empty cells</button>
+          </div>
+
           <div id="wrapper2">
+            <button id="copyGridButton">Copy grid</button>
             <input
               type="text"
               name=""
@@ -112,9 +122,9 @@
         </div>
       </div>
       <div id="transformationsPanel">
-        <p id="transformationsHeading">TRANSFORMATIONS</p>
+        <p id="transformationsHeading">UNAVOIDABLE SETS</p>
         <div id="transformationsList"></div>
-        <button id="applyTransformationButton">Apply transformation</button>
+        <button id="applyTransformationButton">Swap digits</button>
       </div>
     </section>
     <section id="section2"></section>
