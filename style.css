@@ -21,7 +21,7 @@ body {
   padding: 30px 30px 30px 30px;
   flex: 6;
   min-width: 270px;
-  background: linear-gradient(135deg, rgb(27, 28, 30), rgb(18, 18, 21));
+  background: linear-gradient(135deg, rgb(22, 22, 24), rgb(15, 15, 17));
   color: white;
 }
 #transformationsHeading {
@@ -174,6 +174,8 @@ body {
   width: 460px;
   height: 460px;
   user-select: none;
+
+  cursor: pointer;
 }
 .box {
   display: grid;
@@ -204,6 +206,14 @@ canvas {
   top: -1px;
   left: -1px;
   border: 1px solid rgba(255, 0, 0, 0);
+  pointer-events: none;
+}
+
+#wrapper3 {
+  display: flex;
+  width: 460px;
+  margin: 20px 0px 0px 0px;
+  justify-content: space-between;
 }
 
 #wrapper2 {
@@ -211,12 +221,12 @@ canvas {
   position: relative;
   display: flex;
   width: 460px;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   margin: 10px 0px 0px 0px;
 }
 
-#wrapper2 button {
+#wrapper1 button {
   user-select: none;
   font-family: Arial, Helvetica, sans-serif;
   margin: 0px 0px 0px 0px;
@@ -224,23 +234,31 @@ canvas {
   height: 40px;
   padding: 0px 18px;
   border: none;
-  border-top-right-radius: 3px;
-  border-bottom-right-radius: 3px;
+  border-radius: 3px;
+  border-radius: 3px;
   /*background-color: rgb(45, 45, 60);*/
   background-color: rgb(21, 21, 25);
   color: white;
   cursor: pointer;
 }
-#wrapper2 button:hover {
+#wrapper3 button {
+  padding: 0px 22px;
+}
+#wrapper1 button:hover {
   background-color: rgb(28, 28, 35);
 }
-#wrapper2 button:active {
+#wrapper1 button:active {
   background-color: rgb(30, 30, 36);
 }
 
+#wrapper1 #inputButton {
+  border-top-left-radius: 0px;
+  border-bottom-left-radius: 0px;
+}
 #gridDigitsInput {
   border: 1px solid rgb(51, 53, 63);
   height: 40px;
+  margin-left: 14px;
   flex: 1;
   border-top-left-radius: 3px;
   border-bottom-left-radius: 3px;
@@ -262,21 +280,6 @@ canvas {
   user-select: none;
 }
 
-#randomGridButton {
-  user-select: none;
-  font-family: Arial, Helvetica, sans-serif;
-  margin: 20px 0px 0px 0px;
-  font-size: 16px;
-  height: 40px;
-  width: 460px;
-  padding: 0px 18px;
-  border: none;
-  border-radius: 3px;
-  /*background-color: rgb(45, 45, 60);*/
-  background-color: rgb(21, 21, 25);
-  color: white;
-  cursor: pointer;
-}
 #randomGridButton:hover {
   background-color: rgb(28, 28, 35);
 }
@@ -292,7 +295,7 @@ canvas {
   position: relative;
   box-sizing: border-box;
   background-color: rgb(85, 85, 91);
-  background: linear-gradient(135deg, rgb(27, 28, 30), rgb(18, 18, 21));
+  background: linear-gradient(135deg, rgb(22, 22, 24), rgb(15, 15, 17));
   flex: 6;
   min-width: 370px;
   padding: 30px 30px 30px 30px;
@@ -376,7 +379,7 @@ canvas {
   width: 0%;
   background-color: rgb(243, 90, 105); /*rgb(81, 234, 157);*/
   height: 100%;
-  transition: width 0.45s, background-color 0.85s;
+  transition: width 0.33s, background-color 0.8s;
 }
 .percentage {
   font-family: Arial, Helvetica, sans-serif;
@@ -401,6 +404,7 @@ canvas {
 }
 
 #analyzeButton {
+  position: relative;
   width: 100%;
   display: block;
   user-select: none;
@@ -408,7 +412,7 @@ canvas {
   margin: 20px 0px 20px 0px;
   font-size: 16px;
   height: 40px;
-  padding: 0px 18px;
+  padding: 0px 0px;
   border: none;
   border-radius: 3px;
   background-color: rgb(62, 62, 81);
@@ -420,6 +424,33 @@ canvas {
 }
 #analyzeButton:active {
   background-color: rgb(79, 79, 95);
+}
+
+#visualizationProgressBar {
+  position: absolute;
+  background-color: rgb(101, 168, 255);
+  bottom: -6px;
+  width: 0%;
+  height: 3px;
+  border-top-right-radius: 3px;
+  border-bottom-right-radius: 3px;
+  opacity: 0;
+  animation-fill-mode: forwards;
+}
+
+@keyframes visualizingAnalisis {
+  0% {
+    opacity: 1;
+  }
+  99% {
+    width: 100%;
+    opacity: 1;
+    background-color: rgb(60, 255, 142);
+  }
+  100% {
+    width: 0%;
+    opacity: 0;
+  }
 }
 
 #analysisAlert {
