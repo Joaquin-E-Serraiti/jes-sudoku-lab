@@ -24,10 +24,15 @@ export class SudokuLab {
         this.cellHTriplet = []; // Horizontal Triplet
         this.cellVTriplet = []; // Vertical Triplet
 
+        // Neighbours: cells in the same row, column or box.
+        this.cellNeighbours = Array.from({length:81}, () => new Set());
+
         // Ordered right to left, top to bottom
         this.horizontalTriplets = Array.from({length:27}, () => []);
         this.verticalTriplets = Array.from({length:27}, () => []);
         this.boxes = Array.from({length:9}, () => []);
+        this.columns = Array.from({length:9}, () => []);
+        this.rows = Array.from({length:9}, () => []);
 
         // Indices of horizontal and vertical triplets per box
         this.boxesHTriplets = Array.from({length:9}, () => []);
@@ -37,6 +42,13 @@ export class SudokuLab {
         this.bandBoxes = [[0, 1, 2], [3, 4, 5], [6, 7, 8]];
         this.stackBoxes = [[0, 3, 6], [1, 4, 7], [2, 5, 8]];
 
+        // Grid generation data structures
+        this.gridsGenerated = [];
+        this.buckets = Array.from({length:11}, () => []);
+        this.cellCandidatesBits = [];
+        this.cellBucket = [];
+        this.cellBucketPos = [];
+
         this.fillLookUpTables();
         
         // Grid info
@@ -45,7 +57,6 @@ export class SudokuLab {
 
         this.setNewGrid(sudokuString);
 
-        this.gridsGenerated = [];
         this.transformations = {
             "tripletSwaps": [],
             "digitSwaps1": [],
@@ -97,12 +108,29 @@ export class SudokuLab {
             this.horizontalTriplets[this.cellHTriplet[i]].push(i);
             this.verticalTriplets[this.cellVTriplet[i]].push(i);
             this.boxes[this.cellBox[i]].push(i);
+            this.columns[this.cellCol[i]].push(i);
+            this.rows[this.cellRow[i]].push(i);
         }
         for (let i = 0; i<27; i++) {
             const hTripletBox = (i % 3)+(Math.floor(i/9)*3);
             const vTripletBox = Math.floor(i/3);
             this.boxesHTriplets[hTripletBox].push(i);
             this.boxesVTriplets[vTripletBox].push(i);
+        }
+        for (let i = 0; i < 81; i++) {
+            const box = this.boxes[this.cellBox[i]];
+            const column = this.columns[this.cellCol[i]];
+            const row = this.rows[this.cellRow[i]];
+            for (const cell of box) {
+                this.cellNeighbours[i].add(cell);
+            }
+            for (const cell of column) {
+                this.cellNeighbours[i].add(cell);
+            }
+            for (const cell of row) {
+                this.cellNeighbours[i].add(cell);
+            }
+            this.cellNeighbours[i].delete(i);
         }
     }
 
@@ -115,11 +143,34 @@ export class SudokuLab {
         this.verticalTripletsBits = Array(27).fill(0);
         this.isGridValid = true;
         this.isGridComplete = true;
+        this.gridsGenerated = [];
+
+        this.buckets = Array.from({length:11}, () => []);
+        this.cellCandidatesBits = [];
+        this.cellBucket = [];
+        this.cellBucketPos = [];
+
         this.transformations = {
             "tripletSwaps": [],
             "digitSwaps1": [],
             "digitSwaps2": [],
             "digitSwaps3": []}
+    }
+
+    fillCellBucketsTables() {
+        for (let cellIndex = 0; cellIndex < 81; cellIndex++) {
+            if (this.cells[cellIndex] !== 0) {
+                this.cellCandidatesBits.push(this.digitsAvailable(cellIndex));
+                this.cellBucket.push(0);
+                this.cellBucketPos.push(this.buckets[0].length);
+                this.buckets[0].push(cellIndex);
+                continue
+            }
+            this.cellCandidatesBits.push(this.digitsAvailable(cellIndex));
+            this.cellBucket.push(this.countSetBits(this.cellCandidatesBits[cellIndex])+1);
+            this.cellBucketPos.push(this.buckets[this.cellBucket[cellIndex]].length);
+            this.buckets[this.cellBucket[cellIndex]].push(cellIndex);
+        }
     }
 
     setNewGrid(sudokuString) {
@@ -161,6 +212,9 @@ export class SudokuLab {
             }
             this.addOrRemoveDigit(cellIndex,digit);
         }
+
+        this.fillCellBucketsTables()
+
         return true
     }
 
@@ -252,7 +306,7 @@ export class SudokuLab {
         return array;
     }
 
-    generateRandomGrids(numberOfGridsToGenerate) {
+    generateRandomGrids(numberOfGridsToGenerate = 1, fillOnlyEmptyCells = false) {
         const colBits = [...this.colBits];
         const rowBits = [...this.rowBits];
         const boxBits = [...this.boxBits];
@@ -260,12 +314,18 @@ export class SudokuLab {
         const vTripletsBits = [...this.verticalTripletsBits];
         const gridCells = [...this.cells];
         const isGridValid = this.isGridValid;
-        const isGridComplete = this.isGridComplete;        
-        for (let i = 0; i < numberOfGridsToGenerate; i++) {
+        const isGridComplete = this.isGridComplete;
+
+        if (!fillOnlyEmptyCells) {
             this.resetGridData();
-            this.randomGridGenerator();
+            this.fillCellBucketsTables();
+            console.log(this.cells,this.buckets)
+        }  
+        for (let i = 0; i < numberOfGridsToGenerate; i++) {
+            this.gridGenerator();
         }
-        const gridsGenerated = this.gridsGenerated;
+        
+        const gridsGenerated = [...this.gridsGenerated];
         this.gridsGenerated = [];
         this.cells = gridCells;
         this.colBits = colBits;
@@ -275,28 +335,105 @@ export class SudokuLab {
         this.verticalTripletsBits = vTripletsBits;
         this.isGridComplete = isGridComplete;
         this.isGridValid = isGridValid;
+
+        this.buckets = Array.from({length:11}, () => []);
+        this.cellCandidatesBits = [];
+        this.cellBucket = [];
+        this.cellBucketPos = [];
+        this.fillCellBucketsTables();
+
         return gridsGenerated
     }
 
-    randomGridGenerator(cell = 0) {
-        if (cell == 81) {
+    getMostRestrictedCell() {
+        if (!this.isGridValid) {return "Invalid grid"}
+        
+        for (let i = 0; i < 9; i++) {
+            if (this.buckets[i+2].length > 0) {
+                return this.buckets[i+2].at(-1)
+            }
+        }
+        return null
+    }
+
+    getCandidatesAndBucketData(cellIndex) {
+        return {
+            cellIndex:cellIndex,
+            bucketIndex:this.cellBucket[cellIndex],
+            bucketPos:this.cellBucketPos[cellIndex],
+            candidatesBits:this.cellCandidatesBits[cellIndex],
+        }
+    }
+
+    moveCellToBucket(cellIndex, targetBucketIndex) {
+        const currentBucketIndex = this.cellBucket[cellIndex];
+        const currentBucket = this.buckets[currentBucketIndex];
+        const targetBucket = this.buckets[targetBucketIndex];
+        const currentPos = this.cellBucketPos[cellIndex];
+        const lastCellOfCurrentBucket = currentBucket.at(-1);
+
+        if (cellIndex !== lastCellOfCurrentBucket) {
+            this.cellBucketPos[lastCellOfCurrentBucket] = currentPos;
+            currentBucket[currentPos] = lastCellOfCurrentBucket; 
+        }
+        currentBucket.pop();
+        
+        this.cellBucket[cellIndex] = targetBucketIndex;
+        this.cellBucketPos[cellIndex] = targetBucket.length;
+        targetBucket.push(cellIndex);
+    }
+
+    gridGenerator(depth = 0) {
+        const currentCell = this.getMostRestrictedCell();
+        if (currentCell === null) {
             this.gridsGenerated.push(this.listToString([...this.cells]));
             return true
         }
-        if (this.cells[cell] !== 0) {
-            return this.randomGridGenerator(cell+1);
-        }
-        let availableDigits = this.digitsBitsToList(this.digitsAvailable(cell));
-        availableDigits = this.shuffle(availableDigits);
-        for (const randomDigit of availableDigits) {
-            this.addOrRemoveDigit(cell,randomDigit);
-            const result = this.randomGridGenerator(cell+1);
-            this.addOrRemoveDigit(cell,randomDigit,true);
+
+        const candidates = this.shuffle(this.digitsBitsToList(this.cellCandidatesBits[currentCell]));
+        
+
+        const currentCellBucket = this.cellBucket[currentCell];
+        for (const digit of candidates) {
+        
+            const digitBit = 1 << (digit-1)
+
+
+            this.addOrRemoveDigit(currentCell,digit);
+            this.moveCellToBucket(currentCell,0);
+            const neighboursHistory = [];
+            let deadEnd = false;
+            for (const neighbour of this.cellNeighbours[currentCell]) {
+                if (this.cellBucket[neighbour] === 0 || !(this.cellCandidatesBits[neighbour] & digitBit)) {continue}
+                
+                if (this.cellBucket[neighbour] === 2) {
+                    deadEnd = true;
+                    break
+                }
+                neighboursHistory.push({cellIndex:neighbour,bucket:this.cellBucket[neighbour]});
+                this.cellCandidatesBits[neighbour] &= ~digitBit;
+
+                this.moveCellToBucket(neighbour,this.cellBucket[neighbour]-1);
+            }
+
+            let result = null;
+            if (!deadEnd) {result = this.gridGenerator(depth+1)}
+            if (neighboursHistory.length > 0) {
+                for (let i = neighboursHistory.length-1; i >= 0; i--) {
+                    const neighbourData = neighboursHistory[i];
+                    this.moveCellToBucket(neighbourData.cellIndex,neighbourData.bucket);
+                    this.cellCandidatesBits[neighbourData.cellIndex] |= digitBit;
+                }  
+            }
+
+            this.moveCellToBucket(currentCell,currentCellBucket);
+            this.addOrRemoveDigit(currentCell,digit,true)
+
             if (result) {
                 return true
             }
         }
-        return false
+        return null
     }
 
 
@@ -822,5 +959,3 @@ export class SudokuLab {
         }
     }
 }
-
-
