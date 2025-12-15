@@ -225,7 +225,7 @@ export class SudokuLab {
         return bits}
 
     isOnlyOneBitSet(bits) {
-        return !(bits & (bits-1));
+        return bits !== 0 && !(bits & (bits - 1));
     }
 
     countSetBits(bitmask) {
@@ -822,4 +822,5 @@ export class SudokuLab {
         }
     }
 }
+
 
