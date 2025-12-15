@@ -5,7 +5,12 @@ import { Visualize } from "./visualize.js";
 const canvas = document.getElementById("gridCanvas");
 const sudokuGrid = document.getElementById("grid");
 const inputField = document.getElementById("gridDigitsInput");
+
+const clearGridButton = document.getElementById("clearGridButton");
+const fillEmptyCellsButton = document.getElementById("fillCellsButton");
+const copyGridButton = document.getElementById("copyGridButton");
 const inputButton = document.getElementById("inputButton");
+
 const inputAlert = document.getElementById("inputAlert");
 const visualizeAnalysisButton = document.getElementById("analyzeButton");
 const analysisAlert = document.getElementById("analysisAlert");
@@ -48,6 +53,8 @@ const DACmetric1 = document.getElementById("DACMetric1");
 canvas.width = sudokuGrid.offsetWidth-4;
 canvas.height = sudokuGrid.offsetHeight-4;
 
+const squares = Array(81).fill(null);
+
 for (let i1 = 0; i1 < 9; i1++) {
     const box = document.createElement("div");
     box.classList.add("box");
@@ -55,12 +62,17 @@ for (let i1 = 0; i1 < 9; i1++) {
     for (let i2 = 0; i2 < 9; i2++) {
         const square = document.createElement("div");
         const paragraph = document.createElement("p");
+        const squareIndex = (((Math.floor(i1/3)*3)+Math.floor(i2/3))*9 + (((i1%3)*3)+i2%3));
         
-        paragraph.id = "p"+(((Math.floor(i1/3)*3)+Math.floor(i2/3))*9 + (((i1%3)*3)+i2%3));
+        paragraph.id = "p"+squareIndex;
 
         square.appendChild(paragraph);
-        square.id = "cell"+(((Math.floor(i1/3)*3)+Math.floor(i2/3))*9 + (((i1%3)*3)+i2%3));
+        square.id = "cell"+squareIndex;
         square.classList.add("cell");
+        square.onclick = () => {selectCell(squareIndex)};
+
+        squares[squareIndex] = square;
+
         box.appendChild(square);
     }
     sudokuGrid.appendChild(box);
@@ -71,6 +83,57 @@ const visualizationTool = new Visualize(canvas, cellWidth-0.5, 2, 2, 1);
 let visualizingAnalisis = false;
 const sudokuLab = new SudokuLab(undefined,visualizationTool)
 
+clearGridButton.onclick = function() {
+    if (visualizingAnalisis) {return}
+    const newGrid = "000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+    sudokuLab.setNewGrid(newGrid);
+    renderGridDigits(newGrid);
+}
+copyGridButton.onclick = function() {
+    navigator.clipboard.writeText(sudokuLab.getSudokuString());
+    //.then(() => alert("Copied!"))
+    //.catch(err => console.error("Error copying text: ", err));
+}
+fillEmptyCellsButton.onclick = function() {
+    if (visualizingAnalisis) {return}
+    generateRandomGrid(true)
+}
+
+
+//------------------------------ CELL SELECTION LOGIC ------------------------------
+
+let currentSelectedCellIndex = null;
+function selectCell(newSelectedCellIndex) {
+    if (visualizingAnalisis) {return}
+    if (currentSelectedCellIndex !== null) {squares[currentSelectedCellIndex].style.boxShadow = "none"}
+    if (currentSelectedCellIndex == newSelectedCellIndex) {
+        currentSelectedCellIndex = null;
+    } else {
+        squares[newSelectedCellIndex].style.boxShadow = "inset 0px 0px 0px 3px rgba(92, 134, 238, 1)";
+        currentSelectedCellIndex = newSelectedCellIndex;
+    }
+    console.log(newSelectedCellIndex)
+}
+document.addEventListener("keydown", function(event) {
+    if (currentSelectedCellIndex !== null && !isNaN(event.key)) {
+        let digit = undefined;
+        if (event.key == " ") {
+            digit = 0;
+            event.preventDefault();
+        } else {digit = event.key}
+        const currentSudokuString = sudokuLab.getSudokuString();
+        const newSudokuString = currentSudokuString.slice(0, currentSelectedCellIndex) + digit + currentSudokuString.slice(currentSelectedCellIndex + 1);
+        renderGridDigits(newSudokuString)
+    }
+})
+document.addEventListener("click", function(event) {
+    if (!sudokuGrid.contains(event.target) && currentSelectedCellIndex !== null) {
+        squares[currentSelectedCellIndex].style.boxShadow = "none";
+        currentSelectedCellIndex = null;
+    }
+})
+
+//----------------------------------------------------------------------------------
 
 
 function processSudokuString(sudokuString) {
@@ -144,20 +207,19 @@ function renderGridDigits(sudokuString) {
         resetPatternMetrics();
         clearTranformationsList();
     }
+    if (sudokuLab.isGridComplete) {
+        gridCompletenessParagraph.style.color = "white";
+    }
+    if (sudokuLab.isGridValid) {
+        gridValidityParagraph.style.color = "white";
+    } 
     return true
 }
 
 async function inputButtonPressed() {
     if (visualizingAnalisis) {return}
     const sudokuString = inputField.value;
-    if (renderGridDigits(sudokuString)) {
-        if (sudokuLab.isGridComplete) {
-            gridCompletenessParagraph.style.color = "white";
-    }
-        if (sudokuLab.isGridValid) {
-            gridValidityParagraph.style.color = "white";
-        }  
-    }
+    renderGridDigits(sudokuString)
     if (sudokuLab.isGridComplete && sudokuLab.isGridValid) {
         analysisAlert.style.display = "none";
     }
@@ -269,11 +331,20 @@ function displayTransformation(transformationType,transformation) {
 }
 
 visualizeAnalysisButton.onclick = async () => {
+    if (visualizingAnalisis || !(sudokuLab.isGridComplete && sudokuLab.isGridValid)) {return}
+
+    const vizProgressBar = document.getElementById("visualizationProgressBar");
+    vizProgressBar.style.animation = "none";
+    requestAnimationFrame(() => {
+        vizProgressBar.style.animation = "visualizingAnalisis 41s linear";
+    })
+
+    sudokuGrid.style.cursor = "default";
     visualizationTool.clearCanvas();
-    if (visualizingAnalisis) {return}
     visualizingAnalisis = true;
-    await sudokuLab.analysisReport(true)
+    await sudokuLab.analysisReport(true);
     visualizingAnalisis = false;
+    sudokuGrid.style.cursor = "pointer";
 }
 
 
@@ -371,10 +442,14 @@ function trasnformationElementClicked(transformationElement,transformationType,c
 }
 let transformationSelected = null;
 
-document.getElementById("randomGridButton").onclick = generateRandomGrid;
-function generateRandomGrid() {
+document.getElementById("randomGridButton").onclick = function() {generateRandomGrid()};
+function generateRandomGrid(fillOnlyEmptyCells = false) {
     if (visualizingAnalisis) {return}
-    const newSudokuString = sudokuLab.generateRandomGrids(1)[0];
+    const newSudokuString = sudokuLab.generateRandomGrids(1,fillOnlyEmptyCells)[0];
+    if (!newSudokuString) {
+        window.alert("No grid found.")
+        return
+    }
     sudokuLab.setNewGrid(newSudokuString);
     renderGridDigits(newSudokuString);
     if (sudokuLab.isGridComplete) {
