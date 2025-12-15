@@ -319,7 +319,6 @@ export class SudokuLab {
         if (!fillOnlyEmptyCells) {
             this.resetGridData();
             this.fillCellBucketsTables();
-            console.log(this.cells,this.buckets)
         }  
         for (let i = 0; i < numberOfGridsToGenerate; i++) {
             this.gridGenerator();
@@ -959,3 +958,4 @@ export class SudokuLab {
         }
     }
 }
+
